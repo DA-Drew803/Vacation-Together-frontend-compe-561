@@ -2,128 +2,248 @@
 
 ## Purpose and scope
 
-This document defines the behavior of the four desktop web pages in the current [Figma design](https://www.figma.com/design/eAUzix6NADXsGdHoWowikE/Vacation-home?node-id=0-1&p=f): Landing, Planning, Destination Results, and Itinerary. It translates the visual flow into page actions for implementation. No mobile design changes are included.
+Vacation Together is a collaborative group travel planner. This specification defines the MVP web journey and translates the existing [Figma design](https://www.figma.com/design/eAUzix6NADXsGdHoWowikE/Vacation-home?node-id=0-1&p=f) into functional behavior. It covers Landing, authentication, Trip membership, Planning, Destination Matches, Destination Voting, and the Itinerary lifecycle. No mobile design revisions are included.
 
-The first implementation can use clearly identified sample destinations and itineraries. A displayed match percentage or price must not be presented as a calculated or live value until the calculation and data source are implemented.
+The architecture described here is confirmed. Details under **Implementation dependencies and unresolved decisions** remain open and must not be invented during implementation.
 
 ## Repository boundary
 
-The course project uses **two separate GitHub repositories**. Keep their code, dependencies, configuration, and tests separate.
+The project uses separate frontend and backend repositories.
 
-`AGENTS.md` is a local-only instruction file. Ignore it in each repository and never commit or push it to GitHub.
-
-| Frontend repository | Backend repository |
+| Frontend | Backend |
 | --- | --- |
 | Next.js, React, TypeScript, Tailwind CSS, and ShadCN UI. | FastAPI, Pydantic, SQL, and PostgreSQL. |
-| Owns the four web pages, navigation, form interactions, English website copy, loading/error states, and presentation of results. | Owns request validation, trip persistence, destination matching, price estimates, itinerary data, and refinement rules. |
-| Calls the backend API and displays its responses. It must not contain database credentials or a second copy of the production matching algorithm. | Returns data through documented API responses. It must not contain page components or frontend styling. |
+| Owns pages, navigation, forms, voting controls, English website copy, accessibility, and feedback states. | Owns authentication, authorization, persistence, aggregation, destination matching, weather retrieval, deterministic voting, itinerary generation, revisions, and approval rules. |
+| Displays only weather and recommendation data returned by the backend. | Retrieves structured weather through a backend integration with an approved online weather API or service. AI must not invent weather. |
+| Never calculates the winner or grants permissions. | Uses deterministic code for membership, voting, and approval decisions. |
 
-The teams should agree on request and response shapes before connecting the repositories. The API outline below is a proposed interface, not an existing implementation.
+The frontend must not contain database, AI, or weather-provider credentials or duplicate backend matching, voting, or approval logic.
+
+## Confirmed MVP architecture
+
+### Accounts and membership
+
+- Every traveler has their own User account.
+- Users participate in one shared Trip through TripMember.
+- The Trip creator becomes OWNER.
+- OWNER is a group administrator, not the final travel decision-maker.
+- OWNER may create the Trip, create and share invitation links, and remove members.
+- OWNER has the same voting weight as every other active TripMember.
+- OWNER cannot override destination voting, approve the itinerary alone, or edit another member's preferences.
+- Invitation links are not assumed to be single-use.
+
+### Planning data
+
+- A Trip has one shared final date range.
+- A Trip has one shared budget per person and a currency.
+- Each TripMember manages only their own interests and private free-text ideas or preferences.
+- Raw private free text is not displayed to other members by default.
+- The MVP has no per-member Availability, per-member Budget, or lowest-member-budget logic.
+
+### Recommendations, voting, and itinerary
+
+- The backend aggregates member preferences into group-level recommendation input.
+- The backend produces weather-enriched DestinationCandidates.
+- A DestinationCandidate represents a destination recommendation, not a complete itinerary.
+- All active TripMembers see the same DestinationCandidates and vote with equal weight.
+- Deterministic backend logic selects the winning destination and sets `selected_destination_id`.
+- No user manually selects the winning destination.
+- The winning destination automatically starts AI generation of a draft itinerary.
+- All active TripMembers review the same itinerary.
+- Approved structured revision requests may produce revised itinerary content.
+- The itinerary becomes final only after group approval under a rule still to be decided.
+- General chatbot behavior is outside this specification.
 
 ## Main journey
 
-`Landing → Planning → Destination Results → Itinerary`
+`Landing → Authentication / Trip → Planning → Destination Matches → Destination Voting → Draft Itinerary → Review / Revisions → Group Approval → Final Itinerary`
 
-The website should never show an itinerary without a selected destination. If a visitor opens Results without a plan, send them to Planning with an English explanation. If they open Itinerary without a selected destination, send them to Results when a plan exists, or to Planning otherwise.
+| Stage | Proposed route | Purpose |
+| --- | --- | --- |
+| Landing | `/` | Explain the product and invite visitors to begin. |
+| Register | `/register` | Create a User account. |
+| Login | `/login` | Authenticate an existing User. |
+| Trips | `/trips` | Create or open a Trip. |
+| Invitation | `/invitations/{invitation_token}` | Join a Trip through an available invitation. |
+| Planning | `/trips/{trip_id}/plan` | View shared settings and manage the current member's preferences. |
+| Results and voting | `/trips/{trip_id}/results` | Review DestinationCandidates, vote, and see the allowed result state. |
+| Itinerary | `/trips/{trip_id}/itinerary` | Review generation, draft/revised content, approval progress, and the final itinerary. |
 
-| Page | Proposed route | Main purpose | Primary action |
-| --- | --- | --- | --- |
-| Landing | `/` | Explain the group trip planner and invite visitors to begin. | **Start Planning** → `/plan` |
-| Planning | `/plan` | Collect one group's traveler list, dates, budget, and interests. | **Show Our Matches** → `/results` after validation |
-| Destination Results | `/results` | Show ranked destination options with a match score and estimated cost per person. | **Explore [Destination]** → `/itinerary` for that destination |
-| Itinerary | `/itinerary` | Show the selected destination and a day-by-day group plan. | Refinement controls update the displayed plan. |
-
-After backend integration, carry the returned trip ID in the Results and Itinerary URLs (for example, `/results?tripId=...`) so a direct link or refresh can request the correct data from the backend.
+Protected pages require an authenticated active TripMember. Signed-out users should be sent to authentication with a safe return destination. Authenticated non-members receive a clear forbidden or invitation-required state.
 
 ## Shared navigation
 
-| Control in the design | Expected action |
+| Control | Expected action |
 | --- | --- |
 | **Vacation Together** logo | Return to `/`. |
-| **Destinations** | Open `/results` when a plan exists; otherwise open `/plan` with a prompt to plan first. |
-| **Plan a Trip** | Open `/plan`. Preserve existing form values when returning from Results or Itinerary. |
-| **My Trip** | Open `/itinerary` when a destination is selected. Otherwise open `/results` if a plan exists, or `/plan` if it does not. |
-| **About** | Go to an English About section on the Landing page (`/#about`). This small section needs to be added during implementation because it is not shown as a separate Figma page. |
-| Theme control | Switch between light and dark presentation across the site only after both sets of colors and states are specified. Until then, do not ship a visible control that does nothing. |
+| **Destinations** | Open the active Trip's results when available; otherwise open Planning with an explanation. |
+| **Plan a Trip** | Open Planning or Trip creation when no Trip is active. |
+| **My Trip** | Open the active Trip at its current stage. |
+| **About** | Go to the English About section on the Landing page (`/#about`). |
+| Account control | Show authentication or account/sign-out behavior appropriate to session state. |
+
+Do not display a control that appears functional but has no implemented action.
 
 ## Landing
 
-The page introduces the value of planning a trip together. Its hero message and travel image lead to **Start Planning**. The four short benefit blocks under the hero explain group planning, matching, shared interests, and itineraries; they are informational and do not need to be clickable.
+The Landing page introduces collaborative trip planning. **Start Planning** opens the appropriate authentication or Trip entry flow. The logo, About link, and primary action must have real destinations.
 
-**Acceptance criteria**
+## Authentication and Trip membership
 
-- **Start Planning** opens Planning.
-- Shared navigation behaves as specified above.
-- The About navigation has a real on-page destination and no dead link.
+Users may register and log in. Login issues the JWT used for protected requests. To restore a session, the frontend sends its stored JWT to `GET /api/auth/me`, which validates the token and returns the current authenticated User. Expired, malformed, or invalid tokens receive `401 Unauthorized`.
+
+For the stateless JWT MVP, sign-out removes the stored token and other local authentication state. There is no `POST /logout` endpoint unless server-side token revocation is adopted later. Token lifetime and any refresh-token strategy remain unresolved; the frontend must not assume refresh tokens exist.
+
+Trip membership UI includes the active member list. OWNER may create and share invitation links and request removal of members. OWNER controls must not imply additional recommendation, voting, or approval authority.
+
+Invitation error states use neutral language: invalid, expired, revoked, unavailable, or already a member. Reuse, expiration, revocation, acceptance limits, and rejoining remain unresolved.
 
 ## Planning
 
-The design shows five example travelers (Andrew, My Ky, Celeb, Nathan, and Joy), date presets, a custom-date option, four budget choices, and interest choices. Traveler and interest chips allow multiple selections. Date preset and budget each allow one selection.
+The design shows five example travelers (Alex, Jordan, Taylor, Casey, and Morgan). These are neutral sample UI names, not permanent accounts or a five-person limit. Actual travelers come from TripMember records rather than manually toggled traveler chips.
 
-| Control | Expected action |
-| --- | --- |
-| Traveler chip | Toggle the traveler in or out of the trip. Require at least one selected traveler. The displayed names are sample data, not a permanent five-person limit. |
-| **Winter Break**, **Spring Break**, **Summer**, **Flexible Dates** | Select one date choice. The actual date range represented by each seasonal choice must be defined before live recommendations. |
-| **Choose custom dates** | Reveal start and end date inputs. Require an end date on or after the start date. |
-| **Budget**, **Comfort**, **Premium**, **Flexible** | Select one budget tier. Show the amount and currency consistently. |
-| Interest choices | Toggle multiple interests; require at least one before requesting matches. |
-| **Show Our Matches** | Validate the form. If valid, save the plan and open Results. If invalid, show English field-level messages and keep the visitor's selections. |
+### Shared Trip settings
 
-The current form captures **one shared set of choices for a group**. It does not yet capture separate dates, budgets, and interests from each traveler. A real per-person group compatibility score therefore requires either an additional input flow or a revised definition of “group match.”
+Planning displays one shared final date range, one shared budget per person, and currency. The interaction for proposing, editing, and finalizing these values remains unresolved. The frontend must not assume OWNER controls the shared settings.
 
-## Destination Results
+### My preferences
 
-The current design presents Tokyo as the featured result, with Seoul and Bangkok as additional options. Each option has a destination name, match percentage, and estimated price per person. These values are design examples until a scoring method and price source are defined.
+Every active TripMember, including OWNER, may retrieve and update only their own interests and private free-text ideas or preferences. The UI may show submission status but must not reveal another member's raw private text. No per-member Availability or Budget fields are included.
 
-| Control | Expected action |
-| --- | --- |
-| **Explore Tokyo** | Select Tokyo and open its itinerary. |
-| Other destination result | Selecting the result should open an itinerary for that destination. If a destination has no itinerary data yet, show an English unavailable state rather than silently displaying Tokyo's plan. |
-| **Plan a Trip** in navigation | Return to Planning with the previous selections intact so the visitor can change the search. |
+### Recommendation readiness
 
-Results should state why a destination fits the selected dates, budget, and interests once the matching logic exists. They should label cost as **estimated cost per person** and identify what the estimate includes. Provide English loading, empty, and error states when live data is connected.
+The interface may display readiness and generation status after the team defines required submissions, who may trigger generation, and regeneration behavior. These rules must not be inferred from role labels.
 
-## Itinerary
+## Destination Matches
 
-The current Figma example shows a Tokyo trip with four day entries: Arrival + Shibuya, Asakusa + Local Food, Museums + City Walk, and Flexible Group Day. The itinerary shown must always correspond to the destination selected on Results.
+The backend returns multiple DestinationCandidates based on shared dates, shared budget per person, aggregated member preferences, and structured weather.
 
-| Control | Expected action |
-| --- | --- |
-| **Make It Cheaper** | Request a lower-cost version of the selected itinerary, then update the activities and estimated cost together. If no lower-cost alternative exists, explain that in English. |
-| **Reduce Walking** | Replace activities or transport assumptions to reduce walking while keeping the same destination. Explain when no alternative is available. |
-| **Swap Activity** | Let the visitor select an activity and choose an alternative for that day. The design does not yet show the activity-selection interaction; define that interaction before implementing this control. |
-| **Plan a Trip** in navigation | Return to the existing plan for editing. |
+Each candidate may display:
 
-The refinement buttons describe intended behavior. They must not merely change text or numbers without updating the underlying itinerary data. For an initial sample-data implementation, use a small set of explicit alternative itineraries and label them as examples.
+- destination name and image
+- match score and explanation
+- estimated cost per person and currency
+- recommendation data status such as sample or calculated
+- weather conditions and represented period
+- forecast, historical average, or seasonal average data type
+- partial-weather status when only some supported fields are available
+- provider/source metadata when available
+
+Climate averages must never be labeled as a forecast. The frontend must distinguish forecast, historical average, seasonal average, partial weather, and unavailable weather states. In a partial-weather state, it displays only fields supplied by the backend; missing fields must not be presented as estimated or AI-generated values. Unavailable weather receives an unavailable state rather than invented values. All active members retrieve the same candidates. A candidate is a destination option, not a complete itinerary.
+
+## Destination Voting
+
+Every active TripMember, including OWNER, votes with equal weight. The frontend submits only the current authenticated member's ballot and displays only information allowed by finalized rules.
+
+The frontend does not count votes, determine eligibility, resolve ties, choose the winner, or let OWNER override the outcome. Deterministic backend logic sets `selected_destination_id`.
+
+After a winner is finalized, the UI transitions automatically to draft-itinerary generation. There is no manual destination-selection control and no user-facing initial **Generate Itinerary** button.
+
+## Itinerary lifecycle
+
+The itinerary progresses conceptually through:
+
+`draft → under review → revised → pending approval → approved`
+
+Exact names may change in the API contract, but the lifecycle must preserve these stages.
+
+### Initial generation
+
+Setting `selected_destination_id` automatically starts AI draft generation. The frontend retrieves status and content from the itinerary endpoint and supports pending, generating, completed, and failed states.
+
+### Review and structured revisions
+
+All active TripMembers may review the itinerary. Revision controls use approved structured operations such as making a day cheaper, replacing an activity, or reducing walking on a selected day. Allowed users, operations, and effects on existing approvals remain unresolved.
+
+AI may generate revised content. It may not make membership, authorization, voting, or approval decisions.
+
+### Group approval and final itinerary
+
+Final approval belongs to the group. OWNER has no special approval weight or override. The frontend displays the current member's approval and group progress after the rule is finalized. Deterministic backend logic changes the itinerary to approved/final when the eventual group rule is satisfied.
 
 ## Data needed between pages
 
-- **Trip plan:** selected travelers, date choice or custom date range, budget tier, interests, and currency.
-- **Destination result:** destination ID, name, match score, estimated cost per person, image, and a short reason for the match.
-- **Selected trip:** plan ID, selected destination ID, day-by-day activities, estimated cost, and applied refinements.
+- **Session:** authenticated User identity and session state.
+- **Trip:** Trip ID, role, shared dates, budget per person, currency, and selected destination ID.
+- **TripMember:** member ID, safe display information, role, and submission status.
+- **MemberPreference:** current member's interests and private free text.
+- **DestinationCandidate:** stable ID, destination, score, explanation, cost estimate, data status, and structured weather.
+- **Vote/ballot:** current member's selections and permitted group state.
+- **Itinerary:** lifecycle status, selected destination, days, activities, costs, revisions, and approval state.
 
-Keep the plan when navigating backward and when revisiting Results. After backend integration, store trips in PostgreSQL and use a trip identifier so refreshing a page can restore the correct plan and itinerary.
+## Frontend-backend interface
 
-## Proposed frontend–backend interface
+Field names use `snake_case`.
 
-| User action | Frontend request | Backend responsibility |
-| --- | --- | --- |
-| Submit Planning | `POST /trips` with travelers, dates, budget, and interests | Validate and save the plan; return a trip ID. |
-| Open Results | `GET /trips/{tripId}/matches` | Return ranked destinations, match explanations, and per-person cost estimates. |
-| Choose a destination | `POST /trips/{tripId}/destination` with a destination ID | Save the selection and provide the corresponding itinerary. |
-| Open or refresh Itinerary | `GET /trips/{tripId}/itinerary` | Return the selected destination and its current day-by-day plan. |
-| Refine Itinerary | `POST /trips/{tripId}/itinerary/refinements` with a refinement type and an activity target when needed | Apply a valid change and return the updated itinerary and estimate, or explain why no change is available. |
+```text
+POST   /api/auth/register
+POST   /api/auth/login
+GET    /api/auth/me
 
-The frontend should show a clear English message for invalid inputs, unavailable results, and API errors. Endpoint names and payloads should be confirmed by both repository owners before implementation; once confirmed, keep the contract documented in both repositories.
+GET    /api/trips
+POST   /api/trips
+GET    /api/trips/{trip_id}
 
-## Decisions needed before calculated recommendations
+GET    /api/trips/{trip_id}/members
+DELETE /api/trips/{trip_id}/members/{trip_member_id}
 
-1. Will each traveler submit separate preferences, or will one person enter a shared group preference? This determines what “group match” means.
-2. What exact dates do the seasonal presets mean, and which year and time zone apply?
-3. How is the match score calculated and explained to the visitor?
-4. Where do estimated prices come from, what do they include, and when were they last updated?
-5. What data or rules generate alternatives for the three itinerary refinement controls?
+POST   /api/trips/{trip_id}/invitations
+POST   /api/invitations/{invitation_token}/accept
 
-## Out of scope for this first web flow
+GET    /api/trips/{trip_id}/settings
+PATCH  /api/trips/{trip_id}/settings
 
-Account creation, booking, payment, live travel inventory, and changes to the mobile Figma designs are not part of this specification.
+GET    /api/trips/{trip_id}/preferences/me
+PUT    /api/trips/{trip_id}/preferences/me
+
+POST   /api/trips/{trip_id}/destination_candidates/generate
+GET    /api/trips/{trip_id}/destination_candidates
+
+GET    /api/trips/{trip_id}/votes/me
+PUT    /api/trips/{trip_id}/votes/me
+GET    /api/trips/{trip_id}/voting_state
+
+GET    /api/trips/{trip_id}/itinerary
+POST   /api/trips/{trip_id}/itinerary/revisions
+
+GET    /api/trips/{trip_id}/itinerary/approval
+PUT    /api/trips/{trip_id}/itinerary/approval/me
+```
+
+There is no client endpoint for manual destination selection, direct assignment of `selected_destination_id`, or initial itinerary generation.
+
+## Implementation dependencies and unresolved decisions
+
+These details do not contradict the architecture, but affected implementation work must wait for them.
+
+### Invitations
+
+- Single-use or reusable links; expiration, revocation, acceptance/member limits, and rejoining after removal.
+
+### Shared settings
+
+- Who proposes, edits, and finalizes dates and budget per person; included costs; supported currency behavior.
+
+### Destination generation
+
+- Readiness threshold, trigger permission, regeneration, and treatment of existing votes.
+
+### Weather
+
+- Approved provider, reliable forecast horizon, historical/seasonal fallback, and supported units.
+
+### Destination voting
+
+- One or multiple selections; vote changes; closing; participation requirements; result visibility; ties; membership changes; removed-member votes; reopening.
+
+### Itinerary revisions
+
+- Authorization, supported revision types, whether revision requests need group approval, and effects on existing approvals.
+
+### Group itinerary approval
+
+- Majority, unanimity, percentage, or another threshold; participation requirement; approval reset after revision; finalization behavior.
+
+## Out of scope
+
+Booking, payment, live travel inventory, mobile Figma redesign, and the separate general AI chatbot are outside this specification.
