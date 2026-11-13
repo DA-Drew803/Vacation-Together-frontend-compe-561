@@ -6,13 +6,13 @@ See [the web functional specification](docs/web-functional-spec.md) for the four
 
 ## Run locally
 
-Requires Node.js 20.9 or newer and pnpm.
+Requires Node.js 20.9 or newer and Bun.
 
 ```bash
-pnpm install
-pnpm dev
+bun install
+bun run dev
 ```
 
-Open `http://localhost:3000`. Use `pnpm lint`, `pnpm typecheck`, and `pnpm build` to verify changes.
+Open `http://localhost:3000`. Use `bun run lint`, `bun run typecheck`, and `bun run build` to verify changes.
 
 The `/plan` route is a temporary destination for the Landing page's planning links. The Planning page will be built separately.
