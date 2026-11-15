@@ -12,6 +12,9 @@ export type ItineraryActivity = {
   latitude?: number;
   longitude?: number;
   place_id?: string;
+  photo_url?: string;
+  rating?: number;
+  rating_count?: number;
 };
 
 export type ItineraryDay = {
@@ -51,6 +54,10 @@ export function getDestinationPhotoUrl(itinerary: Itinerary) {
   return itinerary.destination_photo_url ? apiUrl(itinerary.destination_photo_url) : null;
 }
 
+export function getActivityPhotoUrl(activity: ItineraryActivity) {
+  return activity.photo_url ? apiUrl(activity.photo_url) : null;
+}
+
 export type Revision = {
   id: string;
   status: RevisionStatus;
@@ -70,4 +77,18 @@ export function requestRevision(tripId: string, instruction: string) {
 
 export function getRevision(tripId: string, revisionId: string) {
   return apiFetch<Revision>(`/trips/${tripId}/itinerary/revisions/${revisionId}`);
+}
+
+export function moveActivity(tripId: string, activityId: string, dayNumber: number, position: number) {
+  return apiFetch<Itinerary>(`/trips/${tripId}/itinerary/items/${activityId}/position`, {
+    method: "PATCH",
+    body: JSON.stringify({ day_number: dayNumber, position }),
+  });
+}
+
+export function swapActivities(tripId: string, sourceActivityId: string, targetActivityId: string) {
+  return apiFetch<Itinerary>(`/trips/${tripId}/itinerary/items/${sourceActivityId}/swap`, {
+    method: "PATCH",
+    body: JSON.stringify({ target_activity_id: targetActivityId }),
+  });
 }

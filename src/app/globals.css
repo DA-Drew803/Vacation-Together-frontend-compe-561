@@ -437,11 +437,31 @@ a:focus-visible {
 .day-select:focus-visible, .activity-row:focus-visible { outline: 2px solid var(--accent); outline-offset: 5px; }
 .day-weather { color: var(--accent); font-size: 11px; line-height: 1.3; white-space: nowrap; }
 .day-weather small { color: var(--page-muted); font-size: 10px; }
+.day-card--selected { border-color: var(--accent); box-shadow: inset 3px 0 0 var(--accent); }
+.day-card--drop-target { background: color-mix(in srgb, var(--surface) 88%, var(--accent)); }
+.day-select:focus-visible,
+.activity-row:focus-visible,
+.move-activity-control select:focus-visible { outline: 1px solid var(--accent); outline-offset: 3px; }
+.activity-row { cursor: grab; }
+.activity-row:active { cursor: grabbing; }
+.activity-row--selected { background: color-mix(in srgb, var(--surface) 78%, var(--accent)); }
+.activity-row--dragging { opacity: 0.45; }
+.activity-row--drop-target { box-shadow: inset 0 2px 0 var(--accent); }
+.activity-copy { display: grid; gap: 3px; text-align: left; }
+.activity-copy small { color: var(--page-muted); font-size: 12px; }
+.activity-hint { opacity: 0; transition: opacity 160ms ease; }
+.activity-row:hover .activity-hint,
+.activity-row--selected .activity-hint { opacity: 1; }
+.move-activity-control { display: flex; align-items: center; gap: 12px; margin-top: 12px; color: var(--page-muted); font-size: 10px; font-weight: 700; letter-spacing: 0.12em; }
+.move-activity-control select { border: 1px solid var(--page-rule); padding: 8px 10px; background: var(--page-bg); color: var(--page-text); font: inherit; font-size: 11px; letter-spacing: 0.08em; }
 .day-number { color: var(--page-muted); font-size: 10px; font-weight: 700; letter-spacing: 0.13em; }
 .activity-row { display: flex; justify-content: space-between; width: 100%; gap: 20px; border: 0; padding: 0 10px 14px 0; background: transparent; color: inherit; font: inherit; line-height: 1.35; text-align: left; }
 .activity-row--selected { color: var(--accent); }
+.activity-photo { width: 112px; min-width: 112px; height: 76px; object-fit: cover; border: 1px solid var(--page-rule); background: var(--surface); }
+.activity-photo--empty { display: grid; place-items: center; color: var(--page-muted); font-size: 9px; font-weight: 700; letter-spacing: .12em; }
 .activity-copy { display: grid; gap: 4px; }
 .activity-copy small { color: var(--page-muted); font-size: 12px; line-height: 1.4; }
+.itinerary-place-rating { color: var(--accent) !important; }
 .activity-row:last-child { padding-bottom: 0; }
 .activity-row span:last-child { color: var(--page-muted); white-space: nowrap; font-size: 12px; }
 .itinerary-total { display: flex; justify-content: space-between; padding-top: 28px; font-size: 11px; letter-spacing: 0.12em; }
@@ -471,13 +491,16 @@ a:focus-visible {
 .state-panel p:not(.eyebrow) { color: var(--page-muted); line-height: 1.6; }
 .itinerary-map-section { margin-top: 70px; padding-top: 28px; border-top: 1px solid var(--page-rule); }
 .itinerary-map-section h3 { margin: 14px 0 22px; font-family: "Cormorant Garamond", Georgia, serif; font-size: clamp(32px, 3vw, 48px); font-weight: 400; line-height: .98; }
-.itinerary-map { height: 390px; overflow: hidden; border: 1px solid var(--page-rule); filter: saturate(.72) sepia(.08); }
-.itinerary-map .leaflet-container { height: 100%; width: 100%; background: var(--surface); }
+.itinerary-map { position: relative; height: 390px; overflow: hidden; border: 1px solid var(--page-rule); background: var(--surface); }
+.itinerary-map__canvas { height: 100%; width: 100%; }
+.itinerary-map__message { position: absolute; inset: 0; display: grid; place-items: center; padding: 24px; background: color-mix(in srgb, var(--surface) 90%, transparent); color: var(--page-muted); font-size: 13px; line-height: 1.5; text-align: center; }
 .itinerary-map__empty { display: grid; min-height: 220px; place-items: center; border: 1px dashed var(--page-rule); padding: 28px; color: var(--page-muted); font-size: 13px; line-height: 1.6; text-align: center; }
-.itinerary-map-marker { display: grid; place-items: center; border: 2px solid var(--page-text); border-radius: 50%; background: var(--accent); box-shadow: 0 2px 8px rgb(0 0 0 / 25%); }
-.itinerary-map-marker span { width: 6px; height: 6px; border-radius: 50%; background: #1b211e; }
-.leaflet-popup-content-wrapper, .leaflet-popup-tip { background: var(--surface); color: var(--page-text); }
-.leaflet-popup-content { font-family: Inter, Arial, sans-serif; font-size: 12px; line-height: 1.5; }
+.itinerary-map__preview { display: grid; grid-template-columns: 120px 1fr; gap: 16px; margin-top: 12px; border: 1px solid var(--page-rule); padding: 12px; background: var(--surface); }
+.itinerary-map__preview h4 { margin: 3px 0 5px; font-size: 18px; font-weight: 500; }
+.itinerary-map__preview-photo { width: 120px; height: 92px; object-fit: cover; background: var(--page-bg); }
+.itinerary-map__preview-photo--empty { display: grid; place-items: center; color: var(--page-muted); font-size: 9px; font-weight: 700; letter-spacing: .12em; }
+.itinerary-place-address { margin: 3px 0 8px; color: var(--page-muted); font-size: 12px; line-height: 1.4; }
+.itinerary-map__preview a { color: var(--accent); font-size: 10px; font-weight: 700; letter-spacing: .12em; }
 
 .approval-shell { display: grid; grid-template-columns: minmax(280px, 0.85fr) minmax(0, 1fr); gap: clamp(30px, 7vw, 120px); align-items: center; min-height: calc(100svh - 100px); }
 .approval-visual { min-height: 620px; }
@@ -501,6 +524,11 @@ a:focus-visible {
   .itinerary-layout, .approval-shell { grid-template-columns: 1fr; gap: 42px; padding-top: 42px; }
   .revision-panel { padding: 24px 0 0; background: transparent; border-top: 1px solid var(--page-rule); }
   .day-card { grid-template-columns: 74px 1fr; gap: 16px; }
+  .activity-row { display: grid; grid-template-columns: 1fr auto; gap: 10px; }
+  .activity-photo { grid-column: 1 / -1; width: 100%; height: 150px; }
+  .move-activity-control { align-items: flex-start; flex-direction: column; }
+  .itinerary-map__preview { grid-template-columns: 1fr; }
+  .itinerary-map__preview-photo { width: 100%; height: 150px; }
   .approval-shell { min-height: 0; }
   .approval-visual { min-height: 250px; order: 0; }
   .approval-card { order: 1; }

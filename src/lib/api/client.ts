@@ -17,6 +17,9 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
   if (token) headers.set("Authorization", `Bearer ${token}`);
 
   const response = await fetch(apiUrl(path), { ...options, headers });
+  if (response.status === 401 && typeof window !== "undefined") {
+    window.localStorage.removeItem("vacation-together-token");
+  }
   if (!response.ok) {
     let message = `Request failed with status ${response.status}`;
     try {
@@ -35,7 +38,10 @@ export async function apiFetchBlob(path: string) {
   const token = getAccessToken();
   const headers = new Headers({ Accept: "image/*" });
   if (token) headers.set("Authorization", `Bearer ${token}`);
-  const response = await fetch(apiUrl(path), { headers });
+  const response = await fetch(path.startsWith("http") ? path : apiUrl(path), { headers });
+  if (response.status === 401 && typeof window !== "undefined") {
+    window.localStorage.removeItem("vacation-together-token");
+  }
   if (!response.ok) throw new Error(`Request failed with status ${response.status}`);
   return response.blob();
 }
