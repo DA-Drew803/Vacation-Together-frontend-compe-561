@@ -5,6 +5,14 @@ export type ApprovalProgress = {
   approved_count: number;
   eligible_count: number;
   finalized: boolean;
+  members: ApprovalMember[];
+  current_member_id?: string | null;
+};
+
+export type ApprovalMember = {
+  member_id: string;
+  display_name: string;
+  approved: boolean;
 };
 
 export type Approval = {

@@ -15,6 +15,11 @@ export type ItineraryActivity = {
   photo_url?: string;
   rating?: number;
   rating_count?: number;
+  purpose?: string;
+  about?: string;
+  website_uri?: string;
+  google_maps_uri?: string;
+  reviews?: Array<{ text: string; author?: string; rating?: number; relative_time?: string }>;
 };
 
 export type ItineraryDay = {

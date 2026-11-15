@@ -8,6 +8,12 @@ export type ItineraryMapLocation = {
   id: string;
   dayNumber: number;
   title: string;
+  purpose?: string;
+  placeId?: string;
+  about?: string;
+  websiteUri?: string;
+  googleMapsUri?: string;
+  reviews?: Array<{ text: string; author?: string; rating?: number; relativeTime?: string }>;
   location?: string;
   latitude: number;
   longitude: number;
@@ -32,19 +38,28 @@ export function ItineraryMap({ locations, selectedActivityId, hoveredActivityId,
   const markers = useRef<Map<string, google.maps.Marker>>(new Map());
   const [mapError, setMapError] = useState<string | null>(null);
   const [mapReady, setMapReady] = useState(false);
-  const [hoveredMapPlaceId, setHoveredMapPlaceId] = useState<string | null>(null);
   const [selectedMapPlaceId, setSelectedMapPlaceId] = useState<string | null>(null);
+  const [theme, setTheme] = useState<"dark" | "light">("dark");
   const lastMarkerSelection = useRef<string | null>(null);
   const selectedLocation = useMemo(
     () => locations.find((location) => location.id === selectedActivityId) ?? null,
     [locations, selectedActivityId],
   );
   const previewLocation = useMemo(
-    () => locations.find((location) => location.id === hoveredMapPlaceId)
-      ?? locations.find((location) => location.id === selectedMapPlaceId)
-      ?? selectedLocation,
-    [locations, hoveredMapPlaceId, selectedMapPlaceId, selectedLocation],
+    () => locations.find((location) => location.id === selectedMapPlaceId)
+      ?? selectedLocation
+      ?? locations[0]
+      ?? null,
+    [locations, selectedMapPlaceId, selectedLocation],
   );
+
+  useEffect(() => {
+    const updateTheme = () => setTheme(document.documentElement.dataset.theme === "light" ? "light" : "dark");
+    updateTheme();
+    const observer = new MutationObserver(updateTheme);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ["data-theme"] });
+    return () => observer.disconnect();
+  }, []);
 
   useEffect(() => {
     if (selectedActivityId !== lastMarkerSelection.current) {
@@ -75,7 +90,7 @@ export function ItineraryMap({ locations, selectedActivityId, hoveredActivityId,
         streetViewControl: false,
         mapTypeControl: false,
         gestureHandling: "cooperative",
-        colorScheme: document.documentElement.dataset.theme === "dark" ? "DARK" : "LIGHT",
+        colorScheme: theme === "dark" ? "DARK" : "LIGHT",
       });
       setMapReady(true);
     }).catch(() => {
@@ -89,7 +104,7 @@ export function ItineraryMap({ locations, selectedActivityId, hoveredActivityId,
       map.current = null;
       setMapReady(false);
     };
-  }, [locations]);
+  }, [locations, theme]);
 
   useEffect(() => {
     if (!map.current) return;
@@ -98,8 +113,8 @@ export function ItineraryMap({ locations, selectedActivityId, hoveredActivityId,
 
     const bounds = new google.maps.LatLngBounds();
     locations.forEach((location) => {
-      const selected = location.id === selectedActivityId;
-      const hovered = location.id === hoveredActivityId || location.id === hoveredMapPlaceId;
+      const hovered = location.id === hoveredActivityId;
+      const markerSelected = location.id === selectedMapPlaceId || (!selectedMapPlaceId && location.id === selectedActivityId);
       const marker = new google.maps.Marker({
         map: map.current,
         position: { lat: location.latitude, lng: location.longitude },
@@ -107,16 +122,14 @@ export function ItineraryMap({ locations, selectedActivityId, hoveredActivityId,
         label: { text: String(location.dayNumber), color: "#1b211e", fontWeight: "700", fontSize: "11px" },
         icon: {
           path: google.maps.SymbolPath.CIRCLE,
-          scale: selected || hovered ? 14 : 11,
-          fillColor: selected ? "#f5c84b" : hovered ? "#e3b83e" : "#d3a935",
+          scale: markerSelected || hovered ? 14 : 11,
+          fillColor: markerSelected ? "#f5c84b" : hovered ? "#e3b83e" : "#d3a935",
           fillOpacity: 1,
           strokeColor: "#f8f6f0",
-          strokeWeight: selected ? 3 : 2,
+          strokeWeight: markerSelected ? 3 : 2,
         },
-        zIndex: selected ? 3 : hovered ? 2 : 1,
+        zIndex: markerSelected ? 3 : hovered ? 2 : 1,
       });
-      marker.addListener("mouseover", () => setHoveredMapPlaceId(location.id));
-      marker.addListener("mouseout", () => setHoveredMapPlaceId((current) => current === location.id ? null : current));
       marker.addListener("click", () => {
         lastMarkerSelection.current = location.id;
         setSelectedMapPlaceId(location.id);
@@ -132,7 +145,7 @@ export function ItineraryMap({ locations, selectedActivityId, hoveredActivityId,
     } else if (locations.length > 1) {
       map.current.fitBounds(bounds, 42);
     }
-  }, [locations, selectedActivityId, hoveredActivityId, hoveredMapPlaceId, onMapSelectActivity, mapReady]);
+  }, [locations, selectedActivityId, selectedMapPlaceId, hoveredActivityId, onMapSelectActivity, mapReady]);
 
   useEffect(() => {
     if (!map.current || !selectedLocation) return;
@@ -149,7 +162,7 @@ export function ItineraryMap({ locations, selectedActivityId, hoveredActivityId,
         <div ref={mapElement} className="itinerary-map__canvas" />
         {mapError && <div className="itinerary-map__message">{mapError}</div>}
       </div>
-      {previewLocation && <div className="itinerary-map__preview" aria-live="polite"><ActivityPreview location={previewLocation} /></div>}
+      {previewLocation ? <aside className="itinerary-map__preview" aria-live="polite"><ActivityPreview location={previewLocation} /></aside> : <aside className="itinerary-map__preview itinerary-map__preview--empty"><p className="eyebrow">SELECT A PLACE ON THE MAP</p></aside>}
     </div>
   );
 }
@@ -158,12 +171,15 @@ function ActivityPreview({ location }: { location: ItineraryMapLocation }) {
   return (
     <>
       <ActivityPreviewPhoto key={location.photoUrl ?? location.id} photoUrl={location.photoUrl} title={location.title} />
-      <div>
+      <div className="itinerary-map__preview-copy">
         <p className="eyebrow">DAY {String(location.dayNumber).padStart(2, "0")}</p>
+        {location.purpose && <p className="activity-purpose">{location.purpose}</p>}
         <h4>{location.title}</h4>
         {location.rating !== undefined && <p className="itinerary-place-rating">★ {location.rating.toFixed(1)}{location.ratingCount ? ` · ${location.ratingCount.toLocaleString()} reviews` : ""}</p>}
         {location.location && <p className="itinerary-place-address">{location.location}</p>}
-        <a href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location.title)}&query_place_id=${encodeURIComponent(location.id)}`} target="_blank" rel="noreferrer">VIEW ON GOOGLE MAPS</a>
+        {location.about && <section className="itinerary-map__overview-section"><p className="eyebrow">ABOUT</p><p className="itinerary-map__overview-copy">{location.about}</p></section>}
+        {location.reviews?.length ? <section className="itinerary-map__overview-section"><p className="eyebrow">WHAT TRAVELERS SAY</p><div className="itinerary-map__reviews">{location.reviews.map((review, index) => <blockquote key={`${review.author ?? "review"}-${index}`}><span className="itinerary-map__review-stars">{"★".repeat(Math.max(1, Math.min(5, Math.round(review.rating ?? 5))))}</span><p>“{review.text}”</p>{review.author && <cite>— {review.author}</cite>}</blockquote>)}</div></section> : null}
+        <div className="itinerary-map__overview-links"><p className="eyebrow">OFFICIAL / USEFUL LINKS</p>{location.websiteUri && <a href={location.websiteUri} target="_blank" rel="noreferrer">OFFICIAL WEBSITE →</a>}<a href={location.googleMapsUri ?? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(location.title)}${location.placeId ? `&query_place_id=${encodeURIComponent(location.placeId)}` : ""}`} target="_blank" rel="noreferrer">VIEW ON GOOGLE MAPS →</a></div>
       </div>
     </>
   );
