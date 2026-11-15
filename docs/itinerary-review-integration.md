@@ -39,6 +39,6 @@ For a custom layout, import `useItineraryReview`, `ItineraryReview`, and `Refine
 - `REDUCE WALKING` and `SWAP ACTIVITY` remain visibly disabled because the persisted API response does not include the trusted metadata required by backend validation.
 - `FINALIZED` disables all revision controls.
 
-Set `NEXT_PUBLIC_API_URL` to the backend origin. Local development defaults to `http://localhost:8000`.
+Set `NEXT_PUBLIC_API_BASE_URL` to the backend API base, for example `http://localhost:8000/api`. The client also accepts the older `NEXT_PUBLIC_API_URL` backend-origin variable for compatibility.
 
 Successful API responses are runtime-validated before they reach the UI. Error parsing accepts both the final contract's `{ code, message }` envelope and FastAPI's current `{ detail }` envelope.

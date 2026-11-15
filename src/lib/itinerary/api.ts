@@ -1,6 +1,17 @@
 import type { Itinerary, RevisionAccepted } from "./types";
 
-const DEFAULT_API_URL = "http://localhost:8000";
+const DEFAULT_API_URL = "http://localhost:8000/api";
+
+function requestUrl(path: string, options: ItineraryApiOptions): string {
+  const baseUrl = (options.apiUrl
+    ?? process.env.NEXT_PUBLIC_API_BASE_URL
+    ?? process.env.NEXT_PUBLIC_API_URL
+    ?? DEFAULT_API_URL).replace(/\/+$/, "");
+  const normalizedPath = baseUrl.endsWith("/api") && path.startsWith("/api")
+    ? path.slice("/api".length)
+    : path;
+  return `${baseUrl}${normalizedPath}`;
+}
 
 export class ItineraryApiError extends Error {
   constructor(
@@ -125,7 +136,7 @@ async function request(
 
   let response: Response;
   try {
-    response = await fetch(`${options.apiUrl ?? process.env.NEXT_PUBLIC_API_URL ?? DEFAULT_API_URL}${path}`, {
+    response = await fetch(requestUrl(path, options), {
       ...init,
       headers,
       signal: options.signal,
