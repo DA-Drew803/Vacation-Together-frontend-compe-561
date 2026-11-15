@@ -1,4 +1,52 @@
-# Vacation Together Frontend
+# ✈️ Vacation Together
+
+## COMPE 561 Final Project
+
+Vacation Together is a collaborative group travel planning platform that helps friends plan trips together, compare preferences, generate personalized itineraries, revise plans with AI, and finalize a trip through group approval.
+
+## About
+
+### Description and Purpose
+
+Planning a group trip can become complicated when travelers have different budgets, schedules, interests, and activity preferences.
+
+Vacation Together brings the planning process into one shared experience. Group members can contribute their preferences, compare destinations, build an itinerary, request AI-assisted changes in natural language, reorganize activities, and approve the final plan together.
+
+The application combines deterministic travel-planning logic with an AI-assisted itinerary workflow so that important operations such as approvals, versioning, and itinerary state remain predictable while AI handles flexible requests such as:
+
+- “Make Day 4 cheaper.”
+- “It’s raining. Give us something indoors on Day 2.”
+- “We’re tired from walking. Find something relaxing for Day 5.”
+
+## Tech Stack
+
+### Frontend
+
+- Next.js
+- React
+- TypeScript
+- Tailwind CSS
+- shadcn/ui
+- Google Maps JavaScript API
+- Bun
+
+### Backend
+
+- Python
+- FastAPI
+- PostgreSQL
+- SQLAlchemy
+- Pydantic
+- JWT authentication
+
+### AI & Travel Services
+
+- OpenAI
+- LangGraph
+- Google Places API
+- Weather API
+
+---
 
 This repository contains the web pages and user interactions for Vacation Together. The backend API is maintained separately in [backend-compe-561](https://github.com/DA-Drew803/backend-compe-561).
 

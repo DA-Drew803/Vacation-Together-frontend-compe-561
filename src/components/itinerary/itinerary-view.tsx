@@ -1,36 +1,82 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ApprovalProgress, getApprovalProgress } from "@/lib/api/approval";
 import { apiFetchBlob } from "@/lib/api/client";
 import { getActivityPhotoUrl, getDestinationPhotoUrl, getItinerary, getRevision, Itinerary, ItineraryWeather, moveActivity, requestRevision, RevisionStatus, swapActivities } from "@/lib/api/itinerary";
-import { getGroupMatch, GroupMatch, getTrip, Trip } from "@/lib/api/trip";
+import { getGroupMatch, GroupMatch } from "@/lib/api/trip";
 import { genericTravelFallback } from "@/lib/destination-image";
+import { revisionFailureMessage } from "@/lib/itinerary/revision-failure";
 import type { ItineraryMapLocation } from "./itinerary-map";
 
 const ItineraryMap = dynamic(() => import("./itinerary-map").then((module) => module.ItineraryMap), { ssr: false });
 
 const revisionActions = [
-  { label: "MAKE IT CHEAPER", instruction: "Make the itinerary cheaper while preserving the trip dates." },
-  { label: "REDUCE WALKING", instruction: "Reduce walking in the itinerary while preserving the trip dates." },
-  { label: "SWAP ACTIVITY", instruction: "Swap one activity for a comparable alternative." },
+  { label: "MAKE IT CHEAPER", instruction: "Make the itinerary cheaper while preserving the destination, trip dates, important activities, budget rules, and number of travel days." },
+  { label: "REDUCE WALKING", instruction: "Reduce unnecessary walking and travel between activities by choosing geographically closer alternatives while preserving the destination, overall trip, important activities, budget, and number of travel days." },
+  { label: "ADD MORE FREE TIME", instruction: "Make the itinerary less packed and add more free time for the travelers. Preserve the most important activities, destination, budget, and all travel days while creating a more relaxed pace." },
 ];
 
 function formatMoney(amount: number, currency: string) {
   return new Intl.NumberFormat(undefined, { style: "currency", currency }).format(amount);
 }
 
+function formatHeroDate(value: string) {
+  const date = new Date(`${value}T00:00:00Z`);
+  if (Number.isNaN(date.getTime())) return value;
+  return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "UTC" }).format(date).toUpperCase();
+}
+
+function summarizeRevision(before: Itinerary, after: Itinerary) {
+  const beforeActivities = before.days.flatMap((day) => day.activities.map((activity) => ({ activity, day: day.day_number })));
+  const afterActivities = after.days.flatMap((day) => day.activities.map((activity) => ({ activity, day: day.day_number })));
+  const beforeById = new Map(beforeActivities.map((entry) => [entry.activity.id, entry]));
+  const afterById = new Map(afterActivities.map((entry) => [entry.activity.id, entry]));
+  const added = afterActivities.filter((entry) => !beforeById.has(entry.activity.id));
+  const removed = beforeActivities.filter((entry) => !afterById.has(entry.activity.id));
+
+  if (added.length === 1 && removed.length === 1 && added[0].day === removed[0].day && added[0].activity.position === removed[0].activity.position) {
+    return `Revision succeeded.\n\nReplaced ${removed[0].activity.title} with ${added[0].activity.title} on Day ${added[0].day}.`;
+  }
+  if (added.length === 1) {
+    const entry = added[0];
+    const previous = afterActivities.find((candidate) => candidate.day === entry.day && candidate.activity.position === entry.activity.position - 1);
+    return `Revision succeeded.\n\nAdded ${entry.activity.title} to Day ${entry.day}${previous ? ` after ${previous.activity.title}` : ""}.`;
+  }
+  if (removed.length === 1) {
+    return `Revision succeeded.\n\nRemoved ${removed[0].activity.title} from Day ${removed[0].day}.`;
+  }
+  if (added.length > 1 && added.length <= 3) {
+    const grouped = added.reduce<Record<number, string[]>>((result, entry) => {
+      result[entry.day] ??= [];
+      result[entry.day].push(entry.activity.title);
+      return result;
+    }, {});
+    const detail = Object.entries(grouped).map(([day, titles]) => `Day ${day} now includes ${titles.join(", ")}`).join("; ");
+    return `Revision succeeded.\n\n${detail}.`;
+  }
+
+  const changedDays = after.days.filter((day) => {
+    const beforeDay = before.days.find((candidate) => candidate.day_number === day.day_number);
+    return beforeDay && day.activities.reduce((total, activity) => total + activity.estimated_cost, 0) !== beforeDay.activities.reduce((total, activity) => total + activity.estimated_cost, 0);
+  });
+  if (changedDays.length === 1) {
+    return `Revision succeeded.\n\nDay ${changedDays[0].day_number} was updated.`;
+  }
+  return "Revision succeeded.\n\nYour itinerary has been updated.";
+}
+
 export function ItineraryView({ tripId }: { tripId: string }) {
   const [itinerary, setItinerary] = useState<Itinerary | null>(null);
   const [approval, setApproval] = useState<ApprovalProgress | null>(null);
-  const [trip, setTrip] = useState<Trip | null>(null);
   const [groupMatch, setGroupMatch] = useState<GroupMatch | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [revisionLabel, setRevisionLabel] = useState<string | null>(null);
-  const [revisionStatus, setRevisionStatus] = useState<RevisionStatus | null>(null);
   const [revisionMessage, setRevisionMessage] = useState<string | null>(null);
+  const revisionCancelRequested = useRef(false);
+  const customRevisionInput = useRef<HTMLTextAreaElement | null>(null);
   const [customInstruction, setCustomInstruction] = useState("");
   const [heroImage, setHeroImage] = useState(genericTravelFallback);
   const [selectedDay, setSelectedDay] = useState<number | null>(null);
@@ -42,7 +88,7 @@ export function ItineraryView({ tripId }: { tripId: string }) {
   const mapLocations = useMemo<ItineraryMapLocation[]>(
     () => itinerary?.days.flatMap((day) => day.activities.flatMap((activity) => (
       activity.location && typeof activity.latitude === "number" && typeof activity.longitude === "number"
-        ? [{ id: activity.id, dayNumber: day.day_number, title: activity.title, location: activity.location, latitude: activity.latitude, longitude: activity.longitude, estimatedCost: activity.estimated_cost, photoUrl: getActivityPhotoUrl(activity), rating: activity.rating, ratingCount: activity.rating_count }]
+        ? [{ id: activity.id, dayNumber: day.day_number, title: activity.title, purpose: activity.purpose, placeId: activity.place_id, about: activity.about, websiteUri: activity.website_uri, googleMapsUri: activity.google_maps_uri, reviews: activity.reviews?.map((review) => ({ text: review.text, author: review.author, rating: review.rating, relativeTime: review.relative_time })), location: activity.location, latitude: activity.latitude, longitude: activity.longitude, estimatedCost: activity.estimated_cost, photoUrl: getActivityPhotoUrl(activity), rating: activity.rating, ratingCount: activity.rating_count }]
         : []
     ))) ?? [],
     [itinerary],
@@ -74,16 +120,14 @@ export function ItineraryView({ tripId }: { tripId: string }) {
   const loadItinerary = useCallback(async () => {
     setError(null);
     try {
-      const [itineraryResult, approvalResult, tripResult, groupMatchResult] = await Promise.allSettled([
+      const [itineraryResult, approvalResult, groupMatchResult] = await Promise.allSettled([
         getItinerary(tripId),
         getApprovalProgress(tripId),
-        getTrip(tripId),
         getGroupMatch(tripId),
       ]);
       if (itineraryResult.status === "rejected") throw itineraryResult.reason;
       setItinerary(itineraryResult.value);
       if (approvalResult.status === "fulfilled") setApproval(approvalResult.value);
-      if (tripResult.status === "fulfilled") setTrip(tripResult.value);
       if (groupMatchResult.status === "fulfilled") setGroupMatch(groupMatchResult.value);
     } catch (requestError) {
       setError(requestError instanceof Error ? requestError.message : "Unable to load the itinerary.");
@@ -115,23 +159,25 @@ export function ItineraryView({ tripId }: { tripId: string }) {
   }, [itinerary]);
 
   async function revise(label: string, instruction: string) {
+    const previousItinerary = itinerary;
+    if (!previousItinerary) return;
+    revisionCancelRequested.current = false;
     setRevisionLabel(label);
-    setRevisionStatus("RUNNING");
     setRevisionMessage(null);
     setError(null);
     try {
       const revision = await requestRevision(tripId, contextualInstruction(instruction));
-      setRevisionStatus(revision.status);
       if (revision.status === "RUNNING" || revision.status === "PENDING") {
         let processingFinished = false;
         let finalRevisionStatus: RevisionStatus = revision.status;
         for (let attempt = 0; attempt < 20; attempt += 1) {
           await new Promise((resolve) => window.setTimeout(resolve, 1500));
+          if (revisionCancelRequested.current) {
+            setRevisionMessage("Stopped waiting for this request. The backend may finish it in the background; refresh to see the authoritative itinerary.");
+            return;
+          }
           const revisionResult = await getRevision(tripId, revision.id);
           finalRevisionStatus = revisionResult.status;
-          setRevisionStatus(revisionResult.status);
-          const current = await getItinerary(tripId);
-          setItinerary(current);
           if (!["RUNNING", "PENDING"].includes(revisionResult.status)) {
             processingFinished = true;
             break;
@@ -140,21 +186,33 @@ export function ItineraryView({ tripId }: { tripId: string }) {
         if (!processingFinished) {
           setRevisionMessage("The backend is still processing this revision. Refresh to check the current state.");
         } else if (finalRevisionStatus === "SUCCEEDED") {
-          setRevisionMessage("Revision succeeded. The backend returned the updated current itinerary.");
+          const updatedItinerary = await getItinerary(tripId);
+          setItinerary(updatedItinerary);
+          setRevisionMessage(summarizeRevision(previousItinerary, updatedItinerary));
         } else if (finalRevisionStatus === "NO_CHANGE") {
           setRevisionMessage("The backend completed the request without changing the current itinerary.");
         } else if (finalRevisionStatus === "FAILED") {
-          setRevisionMessage("The backend rejected this revision. The current itinerary was left unchanged.");
+          setRevisionMessage(revisionFailureMessage());
         }
       }
       await loadItinerary();
     } catch (requestError) {
-      setError(requestError instanceof Error ? requestError.message : "The revision could not be requested.");
-      setRevisionStatus("FAILED");
-      setRevisionMessage(null);
+      setError(null);
+      setRevisionMessage(revisionFailureMessage(requestError instanceof Error ? requestError.message : undefined));
     } finally {
       setRevisionLabel(null);
     }
+  }
+
+  function cancelRevisionWait() {
+    revisionCancelRequested.current = true;
+    setRevisionMessage("Stopped waiting for this request. The backend may finish it in the background; refresh to see the authoritative itinerary.");
+  }
+
+  function retryRevision() {
+    setRevisionMessage(null);
+    setError(null);
+    window.requestAnimationFrame(() => customRevisionInput.current?.focus());
   }
 
   async function moveSelectedActivity(activityId: string, dayNumber: number, position: number) {
@@ -231,24 +289,21 @@ export function ItineraryView({ tripId }: { tripId: string }) {
   const isRevising = itinerary.status === "REVISING" || revisionLabel !== null;
   const statusLabel = itinerary.status === "FINALIZED" ? "FINALIZED" : itinerary.status;
   const renderedHeroImage = getDestinationPhotoUrl(itinerary) ? heroImage : genericTravelFallback;
+  const heroDestination = itinerary.destination_name ?? `Destination ${itinerary.destination_id}`;
+  const heroDateRange = groupMatch?.common_date_ranges.ranges[0];
+  const heroDates = heroDateRange ? `${formatHeroDate(heroDateRange.start_date)} — ${formatHeroDate(heroDateRange.end_date)}` : null;
+  const heroApproval = approval ? `${approval.approved_count}/${approval.eligible_count} APPROVED` : "APPROVAL STATUS UNAVAILABLE";
 
   return (
     <div className="itinerary-shell">
       <header className="itinerary-hero">
-        <div>
-          <p className="eyebrow">SHARED ITINERARY</p>
-          <h1>YOUR GROUP&apos;S<br />CURRENT PLAN</h1>
-          <p className="itinerary-meta">
-            {trip?.name ?? "Shared trip"} · {itinerary.destination_name ?? `Destination ${itinerary.destination_id}`} · Version {itinerary.version}
-            {approval ? ` · ${approval.approved_count}/${approval.eligible_count} approved` : ""}
-          </p>
-          {groupMatch?.common_date_ranges.ranges[0] && (
-            <p className="itinerary-dates">
-              {groupMatch.common_date_ranges.ranges[0].start_date} — {groupMatch.common_date_ranges.ranges[0].end_date}
-            </p>
-          )}
+        <div className="itinerary-hero-image" role="img" aria-label={`${heroDestination} destination`} style={{ backgroundImage: `linear-gradient(135deg, rgb(19 21 17 / 14%), rgb(19 21 17 / 58%)), url("${renderedHeroImage}")` }} />
+        <div className="itinerary-hero-info">
+          <p className="eyebrow">{heroDestination}</p>
+          <h1>Your group itinerary</h1>
+          <p className="itinerary-hero-dates">{itinerary.days.length} {itinerary.days.length === 1 ? "DAY" : "DAYS"}{heroDates ? ` · ${heroDates}` : ""}</p>
+          <p className="itinerary-hero-version">VERSION {itinerary.version} · {heroApproval}</p>
         </div>
-        <div className="itinerary-hero-image" role="img" aria-label={`${itinerary.destination_name ?? "Travel"} landscape`} style={{ backgroundImage: `linear-gradient(135deg, rgb(19 21 17 / 14%), rgb(19 21 17 / 58%)), url("${renderedHeroImage}")` }} />
       </header>
 
       <div className="itinerary-layout">
@@ -312,7 +367,7 @@ export function ItineraryView({ tripId }: { tripId: string }) {
                       }}
                     >
                       <ActivityPhoto activity={activity} />
-                      <span className="activity-copy"><strong>{activity.title}</strong>{activity.rating !== undefined && <small className="itinerary-place-rating">★ {activity.rating.toFixed(1)}{activity.rating_count ? ` · ${activity.rating_count.toLocaleString()} reviews` : ""}</small>}{activity.location && <small>{activity.location}</small>}<small className="activity-hint">{isRevising ? "" : "Drag to move"}</small></span>
+                      <span className="activity-copy">{activity.purpose && <small className="activity-purpose">{activity.purpose}</small>}<strong>{activity.title}</strong>{activity.rating !== undefined && <small className="itinerary-place-rating">★ {activity.rating.toFixed(1)}{activity.rating_count ? ` · ${activity.rating_count.toLocaleString()} reviews` : ""}</small>}{activity.location && <small>{activity.location}</small>}<small className="activity-hint">{isRevising ? "" : "Drag to move"}</small></span>
                       <span>{formatMoney(activity.estimated_cost, itinerary.estimated_total_cost.currency)}</span>
                     </button>
                   ))}
@@ -337,12 +392,6 @@ export function ItineraryView({ tripId }: { tripId: string }) {
             <span>ESTIMATED TOTAL</span>
             <strong>{formatMoney(itinerary.estimated_total_cost.max_amount, itinerary.estimated_total_cost.currency)}</strong>
           </div>
-          <section className="itinerary-map-section" aria-labelledby="map-heading">
-            <p className="eyebrow">EXPLORE THE ROUTE</p>
-            <h3 id="map-heading">Places that bring the plan together.</h3>
-            <ItineraryMap locations={mapLocations} selectedActivityId={selectedActivityId} hoveredActivityId={hoveredActivityId} onMapSelectActivity={selectActivityFromMap} />
-            {!mapLocations.length && <p className="inline-message">The itinerary is still usable. The configured place provider has not returned verified coordinates for these activities.</p>}
-          </section>
         </section>
 
         <aside className="revision-panel" aria-labelledby="revision-heading">
@@ -351,7 +400,7 @@ export function ItineraryView({ tripId }: { tripId: string }) {
           <p className="muted-copy">These actions are sent to the backend as revision instructions. The returned itinerary and version remain authoritative.</p>
           <div className="revision-actions">
             {revisionActions.map((action) => (
-              <button className="secondary-button" disabled={isRevising || itinerary.status === "FINALIZED"} key={action.label} onClick={() => void revise(action.label, action.label === "SWAP ACTIVITY" && selectedActivity ? `Replace ${selectedActivity.title} with a comparable alternative.` : action.instruction)}>
+              <button className="secondary-button" disabled={isRevising || itinerary.status === "FINALIZED"} key={action.label} onClick={() => void revise(action.label, action.instruction)}>
                 {revisionLabel === action.label ? "REVISING…" : action.label}
               </button>
             ))}
@@ -363,8 +412,15 @@ export function ItineraryView({ tripId }: { tripId: string }) {
             <textarea
               id="custom-revision"
               className="revision-chat__input"
+              ref={customRevisionInput}
               value={customInstruction}
               onChange={(event) => setCustomInstruction(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" && !event.shiftKey) {
+                  event.preventDefault();
+                  event.currentTarget.form?.requestSubmit();
+                }
+              }}
               placeholder="Tell the group what you want to change…"
               maxLength={500}
               rows={4}
@@ -379,13 +435,23 @@ export function ItineraryView({ tripId }: { tripId: string }) {
               >
                 SEND REQUEST
               </button>
+              {revisionLabel && <button className="revision-chat__cancel" type="button" onClick={cancelRevisionWait}>CANCEL WAIT</button>}
             </div>
           </form>
-          {revisionStatus && <p className="inline-message">Revision request: {revisionStatus.toLowerCase().replace("_", " ")}.</p>}
-          {revisionMessage && <p className="inline-message">{revisionMessage}</p>}
+          {revisionLabel && <p className="inline-message">Updating your itinerary…</p>}
+          {revisionMessage && <p className={`inline-message revision-message${revisionMessage.startsWith("Revision couldn’t be applied") ? " revision-message--failure" : ""}`}>{revisionMessage}</p>}
+          <div className="revision-panel__actions">
+            {revisionMessage?.startsWith("Revision couldn’t be applied") && <button className="revision-chat__retry" type="button" onClick={retryRevision}>TRY AGAIN</button>}
+            <a className="text-link" href={`/trips/${tripId}/approval`}>VIEW APPROVAL</a>
+          </div>
           {error && <p className="inline-message inline-message--error">{error}</p>}
-          <a className="text-link" href={`/trips/${tripId}/approval`}>VIEW APPROVAL</a>
         </aside>
+        <section className="itinerary-map-section" aria-labelledby="map-heading">
+          <p className="eyebrow">EXPLORE THE ROUTE</p>
+          <h3 id="map-heading">Places that bring the plan together.</h3>
+          <ItineraryMap locations={mapLocations} selectedActivityId={selectedActivityId} hoveredActivityId={hoveredActivityId} onMapSelectActivity={selectActivityFromMap} />
+          {!mapLocations.length && <p className="inline-message">The itinerary is still usable. The configured place provider has not returned verified coordinates for these activities.</p>}
+        </section>
       </div>
     </div>
   );
