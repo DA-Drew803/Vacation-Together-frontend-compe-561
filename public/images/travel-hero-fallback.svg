@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720" role="img" aria-labelledby="title">
+  <title id="title">Travel landscape</title>
+  <rect width="1200" height="720" fill="#27302c"/>
+  <circle cx="880" cy="170" r="110" fill="#d2a944" opacity=".8"/>
+  <path d="M0 450 250 245l155 120 175-205 270 290 180-125 170 125v270H0Z" fill="#536c67"/>
+  <path d="M0 550c260-95 480-38 650 22 220 78 380 56 550-22v170H0Z" fill="#d8d1bd" opacity=".82"/>
+</svg>

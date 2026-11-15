@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 720" role="img" aria-labelledby="title desc">
+  <title id="title">Coastal Maine illustration</title>
+  <desc id="desc">A warm editorial illustration of a Maine lighthouse beside the ocean.</desc>
+  <rect width="1200" height="720" fill="#26302c"/>
+  <circle cx="930" cy="150" r="105" fill="#d2a944" opacity=".88"/>
+  <path d="M0 430C180 365 320 390 470 445s295 90 445 12 185-89 285-65v328H0Z" fill="#173d48"/>
+  <path d="M0 535c190-68 334-45 496 18 158 62 343 79 704-60v227H0Z" fill="#b9c3b5" opacity=".8"/>
+  <path d="M220 430h165l-18 18H238Z" fill="#1b211e"/>
+  <path d="M260 430V220h84v210Z" fill="#eee6d3"/>
+  <path d="m248 220 54-92 54 92Z" fill="#c28443"/>
+  <rect x="254" y="205" width="96" height="15" fill="#1b211e"/>
+  <rect x="278" y="260" width="18" height="35" fill="#2b6571"/>
+  <rect x="311" y="260" width="18" height="35" fill="#2b6571"/>
+  <path d="M0 610c235-50 390-30 565 20 210 60 404 53 635-36" fill="none" stroke="#f5edda" stroke-width="5" opacity=".7"/>
+</svg>
