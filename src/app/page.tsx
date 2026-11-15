@@ -18,7 +18,7 @@ export default function Home() {
           <h1 id="hero-heading">Find a trip everyone can agree on.</h1>
           <p className="hero-description">Shared dates, budgets, and interests.</p>
           <Link className="primary-button" href="/plan">
-            START PLANNING <span aria-hidden="true">↗</span>
+            START PLANNING
           </Link>
         </div>
         <span className="hero-index" aria-hidden="true">01 / 04</span>
@@ -49,7 +49,7 @@ export default function Home() {
               feels right for the whole group.
             </p>
             <Link className="text-link" href="/plan">
-              START PLANNING <span aria-hidden="true">↗</span>
+              START PLANNING
             </Link>
           </div>
         </div>
