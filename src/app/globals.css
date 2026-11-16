@@ -109,6 +109,7 @@ a:focus-visible {
 .header-actions {
   display: flex;
   align-items: center;
+  gap: 12px;
   margin-left: 22px;
 }
 
@@ -866,6 +867,14 @@ a:focus-visible {
   width: min(634px, calc(100% - 48px));
   margin: clamp(75px, 7.5vw, 132px) auto 100px;
 }
+
+.register-page .login-content {
+  margin-top: clamp(48px, 4.3vw, 76px);
+}
+
+.register-page .login-content h1 { margin-bottom: 20px; }
+.register-page .login-description { margin-bottom: 22px; }
+.register-page .login-form { gap: 14px; }
 
 .login-eyebrow,
 .login-form label > span {
