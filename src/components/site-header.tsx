@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { getCurrentUser } from "@/lib/api/auth";
 
 const navigation = [
   { label: "DESTINATIONS", href: "/plan" },
@@ -29,11 +30,18 @@ function MoonIcon() {
 
 export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
   const [menuOpen, setMenuOpen] = useState(false);
+  const [accountName, setAccountName] = useState<string | null>(null);
 
   useEffect(() => {
     const savedTheme = window.localStorage.getItem("vacation-together-theme");
     if (savedTheme === "dark" || savedTheme === "light") {
       document.documentElement.dataset.theme = savedTheme;
+    }
+
+    if (window.localStorage.getItem("vacation-together-token")) {
+      void getCurrentUser()
+        .then((user) => setAccountName(user.display_name))
+        .catch(() => setAccountName(null));
     }
   }, []);
 
@@ -58,6 +66,11 @@ export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
       </nav>
 
       <div className="header-actions">
+        {accountName ? (
+          <span className="header-account" aria-label={`Signed in as ${accountName}`}>{accountName}</span>
+        ) : (
+          <Link className="header-account" href="/login">LOG IN</Link>
+        )}
         <button
           className="icon-button theme-button"
           type="button"
