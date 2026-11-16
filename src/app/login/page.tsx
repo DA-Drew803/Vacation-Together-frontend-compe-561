@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
+import { getCurrentUser } from "@/lib/api/auth";
 import { apiFetch } from "@/lib/api/client";
 
 type LoginResponse = {
@@ -21,6 +22,7 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [accountName, setAccountName] = useState<string | null>(null);
 
   useEffect(() => {
     const savedTheme = window.localStorage.getItem("vacation-together-theme");
@@ -28,6 +30,12 @@ export default function LoginPage() {
       document.documentElement.dataset.theme = savedTheme;
     } else {
       document.documentElement.dataset.theme = "dark";
+    }
+
+    if (window.localStorage.getItem("vacation-together-token")) {
+      void getCurrentUser()
+        .then((user) => setAccountName(user.display_name))
+        .catch(() => setAccountName(null));
     }
   }, []);
 
@@ -52,6 +60,7 @@ export default function LoginPage() {
         "vacation-together-token",
         result.access_token,
       );
+      setAccountName(result.user.display_name);
 
       router.push("/plan");
     } catch (error) {
@@ -80,7 +89,11 @@ export default function LoginPage() {
               <path d="M12 2v2.2M12 19.8V22M4.93 4.93l1.56 1.56m11.02 11.02 1.56 1.56M2 12h2.2m15.6 0H22M4.93 19.07l1.56-1.56M17.51 6.49l1.56-1.56" />
             </svg>
           </button>
-          <span aria-label="Signed-out user">JOY</span>
+          {accountName ? (
+            <span className="login-account" aria-label={`Signed in as ${accountName}`}>{accountName}</span>
+          ) : (
+            <Link className="login-account" href="/login">LOG IN</Link>
+          )}
         </nav>
       </header>
 
@@ -96,7 +109,7 @@ export default function LoginPage() {
               className="login-input"
               type="email"
               autoComplete="email"
-              placeholder="joy@example.com"
+              //placeholder="joy@example.com"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               required
