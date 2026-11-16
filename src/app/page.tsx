@@ -17,7 +17,7 @@ export default function Home() {
           <p className="eyebrow hero-eyebrow">PLAN TOGETHER</p>
           <h1 id="hero-heading">Find a trip everyone can agree on.</h1>
           <p className="hero-description">Shared dates, budgets, and interests.</p>
-          <Link className="primary-button" href="/plan">
+          <Link className="primary-button" href="/login">
             START PLANNING
           </Link>
         </div>
@@ -48,7 +48,7 @@ export default function Home() {
               dates, budget, and interests into one shared plan, then find a direction that
               feels right for the whole group.
             </p>
-            <Link className="text-link" href="/plan">
+            <Link className="text-link" href="/login">
               START PLANNING
             </Link>
           </div>

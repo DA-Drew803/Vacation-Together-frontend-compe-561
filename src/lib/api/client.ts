@@ -1,12 +1,9 @@
+import { clearAccessToken, getAccessToken } from "@/lib/auth/session";
+
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api";
 
 export function apiUrl(path: string) {
   return `${API_BASE_URL}${path}`;
-}
-
-function getAccessToken() {
-  if (typeof window === "undefined") return null;
-  return window.localStorage.getItem("vacation-together-token");
 }
 
 export async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
@@ -14,12 +11,10 @@ export async function apiFetch<T>(path: string, options: RequestInit = {}): Prom
   const headers = new Headers(options.headers);
   headers.set("Accept", "application/json");
   if (options.body) headers.set("Content-Type", "application/json");
-  if (token) headers.set("Authorization", `Bearer ${token}`);
+  if (token && !headers.has("Authorization")) headers.set("Authorization", `Bearer ${token}`);
 
   const response = await fetch(apiUrl(path), { ...options, headers });
-  if (response.status === 401 && typeof window !== "undefined") {
-    window.localStorage.removeItem("vacation-together-token");
-  }
+  if (response.status === 401) clearAccessToken();
   if (!response.ok) {
     let message = `Request failed with status ${response.status}`;
     try {
@@ -39,9 +34,7 @@ export async function apiFetchBlob(path: string) {
   const headers = new Headers({ Accept: "image/*" });
   if (token) headers.set("Authorization", `Bearer ${token}`);
   const response = await fetch(path.startsWith("http") ? path : apiUrl(path), { headers });
-  if (response.status === 401 && typeof window !== "undefined") {
-    window.localStorage.removeItem("vacation-together-token");
-  }
+  if (response.status === 401) clearAccessToken();
   if (!response.ok) throw new Error(`Request failed with status ${response.status}`);
   return response.blob();
 }

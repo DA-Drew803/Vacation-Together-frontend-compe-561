@@ -1,7 +1,10 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
+import { getCurrentUser, logout } from "@/lib/api/auth";
+import { getAccessToken } from "@/lib/auth/session";
 
 const navigation = [
   { label: "DESTINATIONS", href: "/plan" },
@@ -28,12 +31,20 @@ function MoonIcon() {
 }
 
 export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
+  const router = useRouter();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [accountName, setAccountName] = useState<string | null>(null);
 
   useEffect(() => {
     const savedTheme = window.localStorage.getItem("vacation-together-theme");
     if (savedTheme === "dark" || savedTheme === "light") {
       document.documentElement.dataset.theme = savedTheme;
+    }
+
+    if (getAccessToken()) {
+      void getCurrentUser()
+        .then((user) => setAccountName(user.display_name))
+        .catch(() => setAccountName(null));
     }
   }, []);
 
@@ -41,6 +52,12 @@ export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
     const nextTheme = document.documentElement.dataset.theme === "dark" ? "light" : "dark";
     document.documentElement.dataset.theme = nextTheme;
     window.localStorage.setItem("vacation-together-theme", nextTheme);
+  }
+
+  function handleLogout() {
+    logout();
+    setAccountName(null);
+    router.push("/login");
   }
 
   return (
@@ -67,6 +84,13 @@ export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
           <span className="theme-icon theme-icon--light"><MoonIcon /></span>
           <span className="theme-icon theme-icon--dark"><SunIcon /></span>
         </button>
+        {accountName ? (
+          <button className="header-account header-account--button" type="button" onClick={handleLogout} aria-label={`Sign out ${accountName}`}>
+            {accountName} · LOG OUT
+          </button>
+        ) : (
+          <Link className="header-account" href="/login">LOG IN</Link>
+        )}
         <button
           className="icon-button menu-button"
           type="button"
