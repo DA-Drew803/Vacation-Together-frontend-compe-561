@@ -66,11 +66,6 @@ export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
       </nav>
 
       <div className="header-actions">
-        {accountName ? (
-          <span className="header-account" aria-label={`Signed in as ${accountName}`}>{accountName}</span>
-        ) : (
-          <Link className="header-account" href="/login">LOG IN</Link>
-        )}
         <button
           className="icon-button theme-button"
           type="button"
@@ -80,6 +75,11 @@ export function SiteHeader({ overlay = false }: { overlay?: boolean }) {
           <span className="theme-icon theme-icon--light"><MoonIcon /></span>
           <span className="theme-icon theme-icon--dark"><SunIcon /></span>
         </button>
+        {accountName ? (
+          <span className="header-account" aria-label={`Signed in as ${accountName}`}>{accountName}</span>
+        ) : (
+          <Link className="header-account" href="/login">LOG IN</Link>
+        )}
         <button
           className="icon-button menu-button"
           type="button"
