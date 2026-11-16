@@ -1,4 +1,5 @@
 import type { Itinerary, RevisionAccepted } from "./types";
+import { clearAccessToken, getAccessToken } from "@/lib/auth/session";
 
 const DEFAULT_API_URL = "http://localhost:8000/api";
 
@@ -132,7 +133,8 @@ async function request(
   const headers = new Headers(init.headers);
   headers.set("Accept", "application/json");
   if (init.body) headers.set("Content-Type", "application/json");
-  if (options.accessToken) headers.set("Authorization", `Bearer ${options.accessToken}`);
+  const accessToken = options.accessToken ?? getAccessToken();
+  if (accessToken && !headers.has("Authorization")) headers.set("Authorization", `Bearer ${accessToken}`);
 
   let response: Response;
   try {
@@ -147,6 +149,7 @@ async function request(
   }
 
   if (!response.ok) {
+    if (response.status === 401) clearAccessToken();
     const payload = await response.json().catch(() => null) as ContractError | null;
     const code = typeof payload?.code === "string" ? payload.code : null;
     throw new ItineraryApiError(safeMessage(response.status, payload), response.status, code);

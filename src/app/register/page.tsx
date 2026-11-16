@@ -3,18 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
-import { getCurrentUser } from "@/lib/api/auth";
-import { apiFetch } from "@/lib/api/client";
-
-type RegisterResponse = {
-  access_token: string;
-  token_type: string;
-  user: {
-    id: string;
-    email: string;
-    display_name: string;
-  };
-};
+import { getCurrentUser, register } from "@/lib/api/auth";
+import { getAccessToken } from "@/lib/auth/session";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -30,7 +20,7 @@ export default function RegisterPage() {
     const savedTheme = window.localStorage.getItem("vacation-together-theme");
     document.documentElement.dataset.theme = savedTheme === "light" ? "light" : "dark";
 
-    if (window.localStorage.getItem("vacation-together-token")) {
+    if (getAccessToken()) {
       void getCurrentUser()
         .then((user) => setAccountName(user.display_name))
         .catch(() => setAccountName(null));
@@ -54,17 +44,8 @@ export default function RegisterPage() {
 
     setIsSubmitting(true);
     try {
-      const result = await apiFetch<RegisterResponse>("/auth/register", {
-        method: "POST",
-        body: JSON.stringify({
-          display_name: displayName,
-          email,
-          password,
-        }),
-      });
-
-      window.localStorage.setItem("vacation-together-token", result.access_token);
-      setAccountName(result.user.display_name);
+      const user = await register(displayName, email, password);
+      setAccountName(user.display_name);
       router.push("/plan");
     } catch (error) {
       setError(error instanceof Error ? error.message : "Unable to create your account.");
