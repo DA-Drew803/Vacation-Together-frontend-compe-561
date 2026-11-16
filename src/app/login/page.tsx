@@ -3,18 +3,8 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
-import { getCurrentUser } from "@/lib/api/auth";
-import { apiFetch } from "@/lib/api/client";
-
-type LoginResponse = {
-  access_token: string;
-  token_type: string;
-  user: {
-    id: string;
-    email: string;
-    display_name: string;
-  };
-};
+import { getCurrentUser, login } from "@/lib/api/auth";
+import { getAccessToken } from "@/lib/auth/session";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -32,7 +22,7 @@ export default function LoginPage() {
       document.documentElement.dataset.theme = "dark";
     }
 
-    if (window.localStorage.getItem("vacation-together-token")) {
+    if (getAccessToken()) {
       void getCurrentUser()
         .then((user) => setAccountName(user.display_name))
         .catch(() => setAccountName(null));
@@ -51,16 +41,8 @@ export default function LoginPage() {
     setIsSubmitting(true);
 
     try {
-      const result = await apiFetch<LoginResponse>("/auth/login", {
-        method: "POST",
-        body: JSON.stringify({ email, password }),
-      });
-
-      window.localStorage.setItem(
-        "vacation-together-token",
-        result.access_token,
-      );
-      setAccountName(result.user.display_name);
+      const user = await login(email, password);
+      setAccountName(user.display_name);
 
       router.push("/plan");
     } catch (error) {
@@ -109,7 +91,6 @@ export default function LoginPage() {
               className="login-input"
               type="email"
               autoComplete="email"
-              //placeholder="joy@example.com"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               required
