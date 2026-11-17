@@ -1040,6 +1040,12 @@ a:focus-visible {
   line-height: 1.6;
 }
 
+.group-match-empty {
+  margin: 14px 0 0;
+  color: var(--page-muted);
+  font-size: 14px;
+}
+
 .group-match-member-list {
   margin-top: 18px;
   border-top: 1px solid var(--page-rule);
@@ -1065,6 +1071,10 @@ a:focus-visible {
 .group-match-action {
   width: 100%;
   margin-top: 48px;
+}
+
+.group-match-feedback {
+  margin-top: 32px;
 }
 
 .group-match-action:disabled {
