@@ -8,8 +8,8 @@ import { getAccessToken } from "@/lib/auth/session";
 
 const navigation = [
   { label: "DESTINATIONS", href: "/plan" },
-  { label: "PLAN A TRIP", href: "/plan" },
-  { label: "MY TRIP", href: "/plan" },
+  { label: "PLAN A TRIP", href: "/trips" },
+  { label: "MY TRIP", href: "/trips" },
   { label: "ABOUT", href: "/#about" },
 ];
 

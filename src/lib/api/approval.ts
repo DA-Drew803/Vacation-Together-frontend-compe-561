@@ -44,3 +44,15 @@ export function approveCurrentVersion(tripId: string, version: number) {
 export function getTripMembers(tripId: string) {
   return apiFetch<TripMember[]>(`/trips/${tripId}/members`);
 }
+
+export function removeTripMember(
+  tripId: string,
+  memberId: string,
+) {
+  return apiFetch<{ detail: string }>(
+    `/trips/${tripId}/members/${memberId}`,
+    {
+      method: "DELETE",
+    },
+  );
+}
