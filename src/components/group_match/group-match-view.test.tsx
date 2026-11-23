@@ -80,7 +80,7 @@ describe("GroupMatchView", () => {
     expect(mocks.generateDestinationCandidates).not.toHaveBeenCalled();
   });
 
-  it("generates candidates once and continues to destination voting", async () => {
+  it("generates candidates once and continues to destination results", async () => {
     let finishGeneration: (() => void) | undefined;
     mocks.generateDestinationCandidates.mockImplementation(() => new Promise<void>((resolve) => {
       finishGeneration = resolve;
@@ -95,7 +95,7 @@ describe("GroupMatchView", () => {
     expect(screen.getByRole("button", { name: "FINDING DESTINATIONS…" })).toBeDisabled();
 
     await act(async () => finishGeneration?.());
-    expect(mocks.push).toHaveBeenCalledWith("/trips/trip%2Fone/voting");
+    expect(mocks.push).toHaveBeenCalledWith("/trips/trip%2Fone/results");
   });
 
   it("preserves loaded content when candidate generation fails", async () => {
