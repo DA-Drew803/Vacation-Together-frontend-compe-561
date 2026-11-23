@@ -68,7 +68,7 @@ export function GroupMatchView({ tripId }: { tripId: string }) {
     setGenerationError(null);
     try {
       await generateDestinationCandidates(tripId);
-      router.push(`/trips/${encodeURIComponent(tripId)}/voting`);
+      router.push(`/trips/${encodeURIComponent(tripId)}/results`);
     } catch (error) {
       setGenerationError(requestMessage(error, "Unable to generate destination matches."));
     } finally {
