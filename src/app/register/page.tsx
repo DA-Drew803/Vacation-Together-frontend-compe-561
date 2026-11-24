@@ -63,6 +63,7 @@ export default function RegisterPage() {
           <Link href="/plan">DESTINATIONS</Link>
           <Link href="/trips">PLAN A TRIP</Link>
           <Link href="/my-trips">MY TRIP</Link>
+          <Link href="/#about">ABOUT</Link>
           <button className="login-theme-button" type="button" onClick={toggleTheme} aria-label="Toggle color theme">
             <svg className="login-theme-icon login-theme-icon--moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><path d="M20.2 15.7A8.5 8.5 0 0 1 8.3 3.8 8.5 8.5 0 1 0 20.2 15.7Z" /></svg>
             <svg className="login-theme-icon login-theme-icon--sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true"><circle cx="12" cy="12" r="3.5" /><path d="M12 2v2.2M12 19.8V22M4.93 4.93l1.56 1.56m11.02 11.02 1.56 1.56M2 12h2.2m15.6 0H22M4.93 19.07l1.56-1.56M17.51 6.49l1.56-1.56" /></svg>
