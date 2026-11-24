@@ -1169,6 +1169,7 @@ a:focus-visible {
 
 .trip-create-form input,
 .inline-form input,
+.inline-form select,
 .notes-field textarea {
   width: 100%;
   box-sizing: border-box;
@@ -1177,6 +1178,10 @@ a:focus-visible {
   background: var(--surface);
   color: var(--page-text);
   font: inherit;
+}
+
+.inline-form select {
+  min-height: 48px;
 }
 
 .gold-button {
@@ -1236,6 +1241,12 @@ a:focus-visible {
 
 .invite-link-box span {
   flex: 1;
+}
+
+.invite-link-box > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .form-error,

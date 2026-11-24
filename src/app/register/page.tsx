@@ -46,7 +46,7 @@ export default function RegisterPage() {
     try {
       const user = await register(displayName, email, password);
       setAccountName(user.display_name);
-      const next = new URLSearchParams(window.location.search,).get("next;")
+      const next = new URLSearchParams(window.location.search).get("next");
       router.push(next?.startsWith("/")? next : "/trips",);
     } catch (error) {
       setError(error instanceof Error ? error.message : "Unable to create your account.");

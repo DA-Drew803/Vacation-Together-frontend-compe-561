@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { SiteHeader } from "@/components/site-header";
 import { createInvitation } from "@/lib/api/invitation";
+import { buildInvitationMailto } from "@/lib/invitation-email";
 import { createTrip, listTrips, type Trip } from "@/lib/api/trip";
 import { getAccessToken } from "@/lib/auth/session";
 
@@ -13,6 +14,7 @@ export default function TripsPage() {
   const [email, setEmail] = useState("");
   const [createdTrip, setCreatedTrip] = useState<Trip | null>(null);
   const [inviteLink, setInviteLink] = useState<string | null>(null);
+  const [inviteeEmail, setInviteeEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -79,6 +81,7 @@ export default function TripsPage() {
       }`;
 
       setInviteLink(link);
+      setInviteeEmail(email.trim());
       setMessage(
         "Invitation created. Share this link with your traveler.",
       );
@@ -193,8 +196,14 @@ export default function TripsPage() {
                   className="outline-button"
                   onClick={copyInvite}
                 >
-                  COPY INVITE
+                  COPY LINK
                 </button>
+                <a
+                  className="outline-button"
+                  href={buildInvitationMailto(inviteeEmail, inviteLink)}
+                >
+                  DRAFT EMAIL
+                </a>
               </div>
             )}
 

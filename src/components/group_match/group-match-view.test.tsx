@@ -114,6 +114,10 @@ describe("GroupMatchView", () => {
     render(<GroupMatchView tripId="trip-1" />);
 
     expect(await screen.findByRole("alert")).toHaveTextContent("Group match request failed");
+    expect(screen.getByRole("link", { name: "RETURN TO PLANNING →" })).toHaveAttribute(
+      "href",
+      "/trips/trip-1/plan",
+    );
     fireEvent.click(screen.getByRole("button", { name: "TRY AGAIN" }));
     expect(await screen.findByRole("heading", { name: "Where your group aligns." })).toBeInTheDocument();
     expect(mocks.getGroupMatch).toHaveBeenCalledTimes(2);
