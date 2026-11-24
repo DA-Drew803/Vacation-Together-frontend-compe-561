@@ -29,13 +29,13 @@ export default function MyTripsPage() {
     <main className="my-trips-page">
       <SiteHeader />
       <div className="my-trips-shell">
-        <div 
-          className="my-trips-banner" 
-          role="img" aria-label="Friends enjoying a trip together" 
+        <div
+          className="my-trips-banner"
+          role="img" aria-label="Friends enjoying a trip together"
         />
-        <section 
-          className="my-trips-content" 
-          aria-labeledby="my-trips-heading"
+        <section
+          className="my-trips-content"
+          aria-labelledby="my-trips-heading"
         >
           <div className="my-trips-intro">
             <p className="eyebrow">MY TRIPS</p>
@@ -50,7 +50,7 @@ export default function MyTripsPage() {
           ) : !getAccessToken() ? (
             <p className="my-trips-notice">
               Please{" "}
-              <Link className="text-link" href="login?next=/my-trips">
+              <Link className="text-link" href="/login?next=/my-trips">
                 log in
               </Link>{" "}
               to see your trips.
@@ -89,5 +89,5 @@ export default function MyTripsPage() {
         </section>
       </div>
     </main>
-  )
+  );
 }
