@@ -1,14 +1,12 @@
 "use client";
 
 import Link from "next/link";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useState } from "react";
 import { SiteHeader } from "@/components/site-header";
 import { createInvitation } from "@/lib/api/invitation";
-import { createTrip, listTrips, type Trip } from "@/lib/api/trip";
-import { getAccessToken } from "@/lib/auth/session";
+import { createTrip, type Trip } from "@/lib/api/trip";
 
 export default function TripsPage() {
-  const [trips, setTrips] = useState<Trip[]>([]);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [createdTrip, setCreatedTrip] = useState<Trip | null>(null);
@@ -16,20 +14,6 @@ export default function TripsPage() {
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-
-  useEffect(() => {
-    if (!getAccessToken()) return;
-
-    void listTrips()
-      .then(setTrips)
-      .catch((cause) => {
-        setError(
-          cause instanceof Error
-            ? cause.message
-            : "Unable to load trips.",
-        );
-      });
-  }, []);
 
   async function handleCreate(
     event: FormEvent<HTMLFormElement>,
@@ -44,7 +28,6 @@ export default function TripsPage() {
       const trip = await createTrip(name.trim());
 
       setCreatedTrip(trip);
-      setTrips((current) => [trip, ...current]);
       setName("");
     } catch (cause) {
       setError(
@@ -219,23 +202,6 @@ export default function TripsPage() {
           </p>
         )}
 
-        {trips.length > 0 && (
-          <section className="existing-trips">
-            <p className="eyebrow">MY TRIPS</p>
-
-            {trips.map((trip) => (
-              <Link
-                className="existing-trip"
-                key={trip.id}
-                href={`/trips/${trip.id}/plan`}
-              >
-                <span>{trip.name}</span>
-                <small>{trip.state}</small>
-                <span aria-hidden="true">→</span>
-              </Link>
-            ))}
-          </section>
-        )}
       </section>
     </main>
   );

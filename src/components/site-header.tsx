@@ -9,7 +9,7 @@ import { getAccessToken } from "@/lib/auth/session";
 const navigation = [
   { label: "DESTINATIONS", href: "/plan" },
   { label: "PLAN A TRIP", href: "/trips" },
-  { label: "MY TRIP", href: "/trips" },
+  { label: "MY TRIP", href: "/my-trips" },
   { label: "ABOUT", href: "/#about" },
 ];
 
