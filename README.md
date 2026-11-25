@@ -28,6 +28,7 @@ The application combines deterministic travel-planning logic with an AI-assisted
 - Tailwind CSS
 - shadcn/ui
 - Google Maps JavaScript API
+- Bun
 - Axios
 - Vitest and React Testing Library
 
@@ -55,20 +56,20 @@ See [the web functional specification](docs/web-functional-spec.md) for the four
 
 ## Run locally
 
-Requires Node.js 20.9 or newer. Start the backend first, then install the committed npm dependencies:
+Requires Node.js 20.9 or newer and Bun. Start the backend first, then install the dependencies recorded in `bun.lock`:
 
 ```bash
-npm ci
-npm run dev
+bun install
+bun run dev
 ```
 
 Open `http://localhost:3000`. Use the following commands to verify changes:
 
 ```bash
-npm test
-npm run lint
-npm run typecheck
-npm run build
+bun run test
+bun run lint
+bun run typecheck
+bun run build
 ```
 
 Create `.env.local` when the services are not using their defaults:
