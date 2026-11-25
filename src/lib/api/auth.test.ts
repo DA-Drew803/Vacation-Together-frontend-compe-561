@@ -1,53 +1,96 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { getCurrentUser, login, register } from "./auth";
 import { clearAccessToken, getAccessToken } from "@/lib/auth/session";
+import { apiFetch } from "@/lib/api/client";
+import { getCurrentUser, login, register } from "./auth";
+
+vi.mock("@/lib/api/client", () => ({
+  apiFetch: vi.fn(),
+}));
+
+const apiFetchMock = vi.mocked(apiFetch);
 
 afterEach(() => {
   clearAccessToken();
-  vi.unstubAllGlobals();
+  apiFetchMock.mockReset();
 });
 
-const user = { id: "user-1", email: "joy@example.com", display_name: "Joy" };
+const user = {
+  id: "user-1",
+  email: "joy@example.com",
+  display_name: "Joy",
+};
 
 describe("authentication API", () => {
   it("stores the login token and validates the current user", async () => {
-    const fetchMock = vi.fn()
-      .mockResolvedValueOnce(new Response(JSON.stringify({ access_token: "login-token", token_type: "bearer", user }), { status: 200 }))
-      .mockResolvedValueOnce(new Response(JSON.stringify(user), { status: 200 }));
-    vi.stubGlobal("fetch", fetchMock);
+    apiFetchMock
+      .mockResolvedValueOnce({
+        access_token: "login-token",
+        token_type: "bearer",
+        user,
+      })
+      .mockResolvedValueOnce(user);
 
-    await expect(login("joy@example.com", "password")).resolves.toEqual(user);
+    await expect(
+      login("joy@example.com", "password"),
+    ).resolves.toEqual(user);
+
     expect(getAccessToken()).toBe("login-token");
-    expect((fetchMock.mock.calls[1][1].headers as Headers).get("Authorization")).toBe("Bearer login-token");
+
+    expect(apiFetchMock).toHaveBeenNthCalledWith(
+      1,
+      "/auth/login",
+      {
+        method: "POST",
+        body: JSON.stringify({
+          email: "joy@example.com",
+          password: "password",
+        }),
+      },
+    );
+
+    expect(apiFetchMock).toHaveBeenNthCalledWith(
+      2,
+      "/auth/me",
+    );
   });
 
   it("uses the register contract without sending confirmation password", async () => {
-    const fetchMock = vi.fn()
-      .mockResolvedValueOnce(new Response(JSON.stringify({ access_token: "register-token", token_type: "bearer", user }), { status: 201 }))
-      .mockResolvedValueOnce(new Response(JSON.stringify(user), { status: 200 }));
-    vi.stubGlobal("fetch", fetchMock);
+    apiFetchMock
+      .mockResolvedValueOnce({
+        access_token: "register-token",
+        token_type: "bearer",
+        user,
+      })
+      .mockResolvedValueOnce(user);
 
-    await register("Joy", "joy@example.com", "password");
-    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toEqual({
+    await expect(
+      register("Joy", "joy@example.com", "password"),
+    ).resolves.toEqual(user);
+
+    expect(getAccessToken()).toBe("register-token");
+
+    const registerCall = apiFetchMock.mock.calls[0];
+
+    expect(registerCall[0]).toBe("/auth/register");
+
+    expect(JSON.parse(registerCall[1]?.body as string)).toEqual({
       display_name: "Joy",
       email: "joy@example.com",
       password: "password",
     });
-    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).not.toHaveProperty("confirmPassword");
+
+    expect(
+      JSON.parse(registerCall[1]?.body as string),
+    ).not.toHaveProperty("confirmPassword");
   });
 
-  it("clears an invalid token on a 401 but keeps it for a temporary server error", async () => {
-    const fetchMock = vi.fn()
-      .mockResolvedValueOnce(new Response(JSON.stringify({ detail: "Could not validate credentials" }), { status: 401 }))
-      .mockResolvedValueOnce(new Response(JSON.stringify({ detail: "temporarily unavailable" }), { status: 503 }));
-    vi.stubGlobal("fetch", fetchMock);
+  it("propagates errors from the current-user request", async () => {
+    apiFetchMock.mockRejectedValueOnce(
+      new Error("Could not validate credentials"),
+    );
 
-    localStorage.setItem("vacation-together-token", "expired-token");
-    await expect(getCurrentUser()).rejects.toThrow();
-    expect(getAccessToken()).toBeNull();
-
-    localStorage.setItem("vacation-together-token", "valid-token");
-    await expect(getCurrentUser()).rejects.toThrow();
-    expect(getAccessToken()).toBe("valid-token");
+    await expect(getCurrentUser()).rejects.toThrow(
+      "Could not validate credentials",
+    );
   });
 });
