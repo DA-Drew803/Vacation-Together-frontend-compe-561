@@ -5,6 +5,8 @@ import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { useAuth } from "@/Context/auth-context";
 import { SiteHeader } from "@/components/site-header";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
 import { acceptInvitation } from "@/lib/api/invitation";
 
 export default function InvitationPage() {
@@ -54,25 +56,25 @@ export default function InvitationPage() {
           <p className="my-trips-notice" role="status">Checking your session…</p>
         ) : !isAuthenticated ? (
           <>
-            <p className="form-error">
-              Sign in or create an account before accepting this invitation.
-            </p>
+            <Alert className="form-error">
+              <AlertDescription className="form-feedback-copy">
+                Sign in or create an account before accepting this invitation.
+              </AlertDescription>
+            </Alert>
 
-            <Link
-              className="gold-button"
-              href={`/login?next=/invitations/${encodeURIComponent(token)}`}
-            >
-              SIGN IN TO JOIN
-            </Link>
-            <Link
-              className="outline-button"
-              href={`/register?next=/invitations/${encodeURIComponent(token)}`}
-            >
-              CREATE ACCOUNT TO JOIN
-            </Link>
+            <Button asChild className="gold-button">
+              <Link href={`/login?next=/invitations/${encodeURIComponent(token)}`}>
+                SIGN IN TO JOIN
+              </Link>
+            </Button>
+            <Button asChild variant="outline" className="outline-button">
+              <Link href={`/register?next=/invitations/${encodeURIComponent(token)}`}>
+                CREATE ACCOUNT TO JOIN
+              </Link>
+            </Button>
           </>
         ) : (
-          <button
+          <Button
             className="gold-button"
             onClick={joinTrip}
             disabled={state === "loading"}
@@ -80,13 +82,13 @@ export default function InvitationPage() {
             {state === "loading"
               ? "JOINING…"
               : "ACCEPT INVITATION"}
-          </button>
+          </Button>
         )}
 
         {error && (
-          <p className="form-error" role="alert">
-            {error}
-          </p>
+          <Alert className="form-error" role="alert">
+            <AlertDescription className="form-feedback-copy">{error}</AlertDescription>
+          </Alert>
         )}
       </section>
     </main>

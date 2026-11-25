@@ -2,6 +2,11 @@
 
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { getCurrentUser } from "@/lib/api/auth";
 import {
   getTripMembers,
@@ -357,15 +362,15 @@ export function PlanningView({
       </div>
 
       {error && (
-        <p className="form-error" role="alert">
-          {error}
-        </p>
+        <Alert className="form-error" role="alert">
+          <AlertDescription className="form-feedback-copy">{error}</AlertDescription>
+        </Alert>
       )}
 
       {status && (
-        <p className="form-success" role="status">
-          {status}
-        </p>
+        <Alert className="form-success" role="status">
+          <AlertDescription className="form-feedback-copy">{status}</AlertDescription>
+        </Alert>
       )}
 
       <div className="planning-grid">
@@ -378,10 +383,11 @@ export function PlanningView({
             className="inline-form"
             onSubmit={savePlanningDetails}
           >
-              <label>
-                <span>START</span>
+              <div className="inline-field">
+                <Label className="inline-field-label" htmlFor="planning-start-date">START</Label>
 
-                <input
+                <Input
+                  id="planning-start-date"
                   type="date"
                   value={start}
                   onChange={(event) =>
@@ -389,12 +395,13 @@ export function PlanningView({
                   }
                   required
                 />
-              </label>
+              </div>
 
-              <label>
-                <span>END</span>
+              <div className="inline-field">
+                <Label className="inline-field-label" htmlFor="planning-end-date">END</Label>
 
-                <input
+                <Input
+                  id="planning-end-date"
                   type="date"
                   value={end}
                   onChange={(event) =>
@@ -402,12 +409,13 @@ export function PlanningView({
                   }
                   required
                 />
-              </label>
+              </div>
 
-              <label>
-                <span>MAX BUDGET / PERSON</span>
+              <div className="inline-field">
+                <Label className="inline-field-label" htmlFor="planning-budget">MAX BUDGET / PERSON</Label>
 
-                <input
+                <Input
+                  id="planning-budget"
                   type="number"
                   min="0.01"
                   step="0.01"
@@ -416,12 +424,13 @@ export function PlanningView({
                   placeholder="1200"
                   required
                 />
-              </label>
+              </div>
 
-              <label>
-                <span>CURRENCY</span>
+              <div className="inline-field">
+                <Label className="inline-field-label" htmlFor="planning-currency">CURRENCY</Label>
 
                 <select
+                  id="planning-currency"
                   value={currency}
                   onChange={(event) => setCurrency(event.target.value)}
                 >
@@ -430,14 +439,14 @@ export function PlanningView({
                   <option value="EUR">EUR</option>
                   <option value="GBP">GBP</option>
                 </select>
-              </label>
+              </div>
 
-              <button
+              <Button
                 className="gold-button"
                 disabled={saving}
               >
                 SAVE DATES &amp; BUDGET
-              </button>
+              </Button>
             </form>
 
           <p className="detail-caption">
@@ -493,7 +502,7 @@ export function PlanningView({
             <label className="notes-field">
               <span>PRIVATE IDEAS FOR THE GROUP</span>
 
-              <textarea
+              <Textarea
                 value={notes}
                 onChange={(event) =>
                   setNotes(event.target.value)
@@ -507,14 +516,14 @@ export function PlanningView({
               </small>
             </label>
 
-            <button
+            <Button
               className="gold-button full-width"
               disabled={saving}
             >
               {saving
                 ? "SAVING…"
                 : "SAVE MY PREFERENCES"}
-            </button>
+            </Button>
           </form>
         </section>
       </div>
@@ -594,42 +603,48 @@ export function PlanningView({
             className="inline-form"
             onSubmit={inviteTraveler}
           >
-            <input
-              type="email"
-              value={email}
-              onChange={(event) =>
-                setEmail(event.target.value)
-              }
-              placeholder="friend@example.com"
-              required
-            />
+            <div className="inline-field">
+              <Label className="inline-field-label" htmlFor="planning-invite-email">TRAVELER EMAIL</Label>
+              <Input
+                id="planning-invite-email"
+                type="email"
+                value={email}
+                onChange={(event) =>
+                  setEmail(event.target.value)
+                }
+                placeholder="friend@example.com"
+                required
+              />
+            </div>
 
-            <button
+            <Button
               className="gold-button"
               disabled={saving}
             >
               CREATE INVITE
-            </button>
+            </Button>
           </form>
 
           {inviteLink && (
             <div className="invite-link-box">
               <span>{inviteLink}</span>
               <div>
-                <button
+                <Button
                   type="button"
+                  variant="outline"
                   className="outline-button"
                   onClick={() => void copyInviteLink()}
                 >
                   COPY LINK
-                </button>
-                <button
+                </Button>
+                <Button
                   type="button"
+                  variant="outline"
                   className="outline-button"
                   onClick={() => void draftInviteEmail()}
                 >
                   DRAFT EMAIL
-                </button>
+                </Button>
               </div>
             </div>
           )}

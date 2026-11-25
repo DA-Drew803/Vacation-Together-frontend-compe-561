@@ -153,11 +153,11 @@ export default function RegisterPage() {
 
         <Card className="login-card">
           <CardContent className="login-card-content">
-        <form className="login-form" onSubmit={handleSubmit}>
-          <Label>
-            <span>YOUR NAME</span>
-
+            <form className="login-form" onSubmit={handleSubmit}>
+          <div className="login-field">
+            <Label className="login-field-label" htmlFor="register-name">YOUR NAME</Label>
             <Input
+              id="register-name"
               className="login-input"
               type="text"
               autoComplete="name"
@@ -168,12 +168,12 @@ export default function RegisterPage() {
               required
               maxLength={120}
             />
-          </Label>
+          </div>
 
-          <Label>
-            <span>EMAIL</span>
-
+          <div className="login-field">
+            <Label className="login-field-label" htmlFor="register-email">EMAIL</Label>
             <Input
+              id="register-email"
               className="login-input"
               type="email"
               autoComplete="email"
@@ -183,12 +183,12 @@ export default function RegisterPage() {
               }
               required
             />
-          </Label>
+          </div>
 
-          <Label>
-            <span>PASSWORD</span>
-
+          <div className="login-field">
+            <Label className="login-field-label" htmlFor="register-password">PASSWORD</Label>
             <Input
+              id="register-password"
               className="login-input"
               type="password"
               autoComplete="new-password"
@@ -199,12 +199,12 @@ export default function RegisterPage() {
               required
               minLength={8}
             />
-          </Label>
+          </div>
 
-          <Label>
-            <span>CONFIRM PASSWORD</span>
-
+          <div className="login-field">
+            <Label className="login-field-label" htmlFor="register-confirm-password">CONFIRM PASSWORD</Label>
             <Input
+              id="register-confirm-password"
               className="login-input"
               type="password"
               autoComplete="new-password"
@@ -215,11 +215,11 @@ export default function RegisterPage() {
               required
               minLength={8}
             />
-          </Label>
+          </div>
 
           {error && (
             <Alert role="alert" className="login-error">
-              <AlertDescription>{error}</AlertDescription>
+              <AlertDescription className="form-feedback-copy">{error}</AlertDescription>
             </Alert>
           )}
 
@@ -232,7 +232,7 @@ export default function RegisterPage() {
               ? "CREATING ACCOUNT…"
               : "CREATE ACCOUNT"}
           </Button>
-        </form>
+            </form>
 
         <p className="login-register">
           Already have an account?{" "}

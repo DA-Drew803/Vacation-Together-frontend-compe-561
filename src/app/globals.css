@@ -20,6 +20,40 @@
   --accent-soft: #4b3e21;
 }
 
+@custom-variant dark (&:is([data-theme="dark"] *));
+
+@theme inline {
+  --color-background: var(--page-bg);
+  --color-foreground: var(--page-text);
+
+  --color-card: var(--surface);
+  --color-card-foreground: var(--page-text);
+
+  --color-popover: var(--surface-raised);
+  --color-popover-foreground: var(--page-text);
+
+  --color-primary: var(--accent);
+  --color-primary-foreground: var(--page-bg);
+
+  --color-secondary: var(--surface-raised);
+  --color-secondary-foreground: var(--page-text);
+
+  --color-muted: var(--surface);
+  --color-muted-foreground: var(--page-muted);
+
+  --color-accent: var(--accent-soft);
+  --color-accent-foreground: var(--page-text);
+
+  --color-destructive: #d16858;
+  --color-border: var(--page-rule);
+  --color-input: var(--page-rule);
+  --color-ring: var(--accent);
+
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+}
+
 :root[data-theme="light"] {
   color-scheme: light;
   --page-bg: #f6f5f0;
@@ -516,7 +550,7 @@ a:focus-visible {
 .secondary-button:disabled { cursor: wait; opacity: 0.5; }
 .revision-chat { margin-top: 28px; padding-top: 26px; border-top: 1px solid var(--page-rule); }
 .revision-chat__label { display: block; margin-bottom: 12px; color: var(--page-muted); font-size: 10px; font-weight: 700; letter-spacing: 0.14em; }
-.revision-chat__input { display: block; width: 100%; min-height: 112px; resize: vertical; border: 1px solid var(--page-rule); padding: 14px; background: var(--page-bg); color: var(--page-text); font: inherit; font-size: 14px; line-height: 1.5; }
+.revision-chat__input { display: block; width: 100%; min-height: 112px; field-sizing: fixed; resize: vertical; border: 1px solid var(--page-rule); border-radius: 0; padding: 14px; background: var(--page-bg); color: var(--page-text); box-shadow: none; font: inherit; font-size: 14px; line-height: 1.5; }
 .revision-chat__input::placeholder { color: var(--page-muted); opacity: 0.85; }
 .revision-chat__input:focus { border-color: var(--accent); outline: 1px solid var(--accent); outline-offset: -1px; }
 .revision-chat__input:disabled { cursor: wait; opacity: 0.55; }
@@ -885,7 +919,8 @@ a:focus-visible {
 .register-page .login-form { gap: 14px; }
 
 .login-eyebrow,
-.login-form label > span {
+.login-form label > span,
+.login-field-label {
   display: block;
   margin: 0;
   color: var(--login-muted);
@@ -914,7 +949,8 @@ a:focus-visible {
 .login-card-content { padding: 0; }
 
 .login-form { display: grid; gap: 22px; }
-.login-form label > span { margin-bottom: 9px; }
+.login-form label > span,
+.login-field-label { margin-bottom: 9px; }
 
 .login-input {
   box-sizing: border-box;
@@ -925,6 +961,7 @@ a:focus-visible {
   padding: 0 20px;
   background: var(--login-input);
   color: var(--login-text);
+  box-shadow: none;
   font: inherit;
   font-size: 17px;
 }
@@ -946,7 +983,7 @@ a:focus-visible {
 
 .login-submit:hover:not(:disabled) { filter: brightness(.9); }
 .login-submit:disabled { cursor: wait; opacity: .65; }
-.login-error { margin: -8px 0 0; color: #b6342c; font-size: 13px; }
+.login-error { margin: -8px 0 0; padding: 0; border: 0; color: #b6342c; font-size: 13px; }
 
 .login-register { margin: 24px 0 0; color: var(--login-button); font-size: 16px; font-weight: 700; }
 .login-register a { color: inherit; }
@@ -1163,15 +1200,19 @@ a:focus-visible {
   margin-top: 38px;
 }
 
-.trip-create-form label,
-.inline-form label,
+.trip-create-form > label,
+.trip-create-form .trip-field,
+.inline-form > label,
+.inline-form .inline-field,
 .notes-field {
   display: grid;
   gap: 8px;
 }
 
-.trip-create-form label span,
-.inline-form label span,
+.trip-create-form > label span,
+.trip-create-form .trip-field-label,
+.inline-form > label span,
+.inline-form .inline-field-label,
 .notes-field span {
   font-size: 9px;
   font-weight: 700;
@@ -1191,6 +1232,18 @@ a:focus-visible {
   font: inherit;
 }
 
+.trip-create-form input {
+  height: auto;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.inline-form input {
+  height: auto;
+  border-radius: 0;
+  box-shadow: none;
+}
+
 .inline-form select {
   min-height: 48px;
 }
@@ -1203,7 +1256,7 @@ a:focus-visible {
   padding: 0 22px;
   border: 1px solid transparent;
   background: var(--accent);
-  color: #20221e;
+  color: var(--page-bg);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.12em;
@@ -1264,8 +1317,15 @@ a:focus-visible {
 .form-success {
   margin: 22px 0 0;
   padding: 13px 15px;
+  border: 0;
   font-size: 13px;
   line-height: 1.5;
+}
+
+.form-feedback-copy {
+  color: inherit;
+  font-size: inherit;
+  line-height: inherit;
 }
 
 .form-error {
@@ -1350,28 +1410,41 @@ a:focus-visible {
   gap: 14px;
 }
 
+.my-trip-link {
+  display: block;
+}
+
 .my-trip-card {
   display: flex;
   min-height: 150px;
   flex-direction: column;
   align-items: flex-start;
+  gap: 0;
   padding: 22px 24px;
   border: 1px solid var(--page-rule);
+  border-radius: 0;
   background: var(--surface);
   color: var(--page-text);
+  box-shadow: none;
   transition: background-color 160ms ease, border-color 160ms ease, transform 160ms ease;
 }
 
-.my-trip-card:hover,
-.my-trip-card:focus-visible {
+.my-trip-link:hover .my-trip-card,
+.my-trip-link:focus-visible .my-trip-card {
   border-color: var(--accent);
   background: var(--surface-raised);
   transform: translateY(-2px);
 }
 
+.my-trip-card-header {
+  gap: 0;
+  padding: 0;
+}
+
 .my-trip-card-title {
   font-family: "Cormorant Garamond", Georgia, serif;
   font-size: clamp(28px, 4vw, 34px);
+  font-weight: 400;
   line-height: 1.1;
 }
 
@@ -1487,7 +1560,8 @@ a:focus-visible {
   gap: 12px;
 }
 
-.inline-form label {
+.inline-form > label,
+.inline-form .inline-field {
   flex: 1 1 150px;
 }
 
@@ -1515,6 +1589,8 @@ a:focus-visible {
 
 .notes-field textarea {
   min-height: 116px;
+  border-radius: 0;
+  box-shadow: none;
   resize: vertical;
 }
 

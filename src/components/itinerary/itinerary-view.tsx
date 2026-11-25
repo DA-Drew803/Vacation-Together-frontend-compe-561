@@ -2,6 +2,8 @@
 
 import dynamic from "next/dynamic";
 import { FormEvent, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { ApprovalProgress, getApprovalProgress } from "@/lib/api/approval";
 import { apiFetchBlob } from "@/lib/api/client";
 import { getActivityPhotoUrl, getDestinationPhotoUrl, getItinerary, getRevision, Itinerary, ItineraryWeather, moveActivity, requestRevision, RevisionStatus, swapActivities } from "@/lib/api/itinerary";
@@ -436,7 +438,7 @@ export function ItineraryView({ tripId }: { tripId: string }) {
             <label className="revision-chat__label" htmlFor="custom-revision">
               ASK FOR A CUSTOM CHANGE
             </label>
-            <textarea
+            <Textarea
               id="custom-revision"
               className="revision-chat__input"
               ref={customRevisionInput}
@@ -455,13 +457,13 @@ export function ItineraryView({ tripId }: { tripId: string }) {
             />
             <div className="revision-chat__footer">
               <span>{customInstruction.length}/500</span>
-              <button
+              <Button
                 className="primary-button revision-chat__submit"
                 type="submit"
                 disabled={!customInstruction.trim() || isRevising || itinerary.status === "FINALIZED"}
               >
                 SEND REQUEST
-              </button>
+              </Button>
               {revisionLabel && <button className="revision-chat__cancel" type="button" onClick={cancelRevisionWait}>CANCEL WAIT</button>}
             </div>
           </form>

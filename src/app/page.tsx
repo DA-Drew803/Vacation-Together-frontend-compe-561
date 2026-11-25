@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { SiteHeader } from "@/components/site-header";
+import { Button } from "@/components/ui/button";
 
 const benefits = [
   { number: "01", title: "GROUP PLANNING", detail: "Made for friends" },
@@ -17,9 +18,9 @@ export default function Home() {
           <p className="eyebrow hero-eyebrow">PLAN TOGETHER</p>
           <h1 id="hero-heading">Find a trip everyone can agree on.</h1>
           <p className="hero-description">Shared dates, budgets, and interests.</p>
-          <Link className="primary-button" href="/login">
-            START PLANNING
-          </Link>
+          <Button asChild className="primary-button">
+            <Link href="/login">START PLANNING</Link>
+          </Button>
         </div>
         <span className="hero-index" aria-hidden="true">01 / 04</span>
       </section>

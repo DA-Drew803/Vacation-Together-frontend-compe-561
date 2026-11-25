@@ -3,6 +3,9 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { SiteHeader } from "@/components/site-header";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { listTrips, type Trip } from "@/lib/api/trip";
 import { getAccessToken } from "@/lib/auth/session";
 
@@ -20,7 +23,13 @@ export default function MyTripsPage() {
     void listTrips()
       .then(setTrips)
       .catch((cause) => {
-        setError(cause instanceof Error ? cause.message : "Unable to load trips.");
+        setError(
+          cause instanceof TypeError
+            ? "Could not connect to the backend. Start FastAPI and try again."
+            : cause instanceof Error
+              ? cause.message
+              : "Unable to load trips.",
+        );
       })
       .finally(() => setLoading(false));
   }, []);
@@ -56,9 +65,9 @@ export default function MyTripsPage() {
               to see your trips.
             </p>
           ) : error ? (
-            <p className="form-error" role="alert">
-              {error}
-            </p>
+            <Alert className="form-error" role="alert">
+              <AlertDescription className="form-feedback-copy">{error}</AlertDescription>
+            </Alert>
           ) : trips.length === 0 ? (
             <p className="my-trips-notice">
               You have no trips yet. Start one with your group.
@@ -67,25 +76,29 @@ export default function MyTripsPage() {
             <div className="my-trips-list">
               {trips.map((trip) => (
                 <Link
-                  className="my-trip-card"
+                  className="my-trip-link"
                   key={trip.id}
                   href={`/trips/${encodeURIComponent(trip.id)}/plan`}
                   aria-label={`Open ${trip.name}`}
                 >
-                  <span className="my-trip-card-title">{trip.name}</span>
-                  <span className="my-trip-card-meta">
-                    {trip.state.replaceAll("_", " ").toLowerCase()}
-                  </span>
-                  <span className="my-trip-card-action">
-                    OPEN TRIP <span aria-hidden="true">→</span>
-                  </span>
+                  <Card className="my-trip-card">
+                    <CardHeader className="my-trip-card-header">
+                      <CardTitle className="my-trip-card-title">{trip.name}</CardTitle>
+                      <CardDescription className="my-trip-card-meta">
+                        {trip.state.replaceAll("_", " ").toLowerCase()}
+                      </CardDescription>
+                    </CardHeader>
+                    <span className="my-trip-card-action">
+                      OPEN TRIP <span aria-hidden="true">→</span>
+                    </span>
+                  </Card>
                 </Link>
               ))}
             </div>
           )}
-          <Link className="my-trips-create" href="/trips">
-            CREATE A NEW TRIP
-          </Link>
+          <Button asChild className="my-trips-create">
+            <Link href="/trips">CREATE A NEW TRIP</Link>
+          </Button>
         </section>
       </div>
     </main>

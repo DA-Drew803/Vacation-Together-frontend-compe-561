@@ -149,60 +149,47 @@ export default function LoginPage() {
 
         <Card className="login-card">
           <CardContent className="login-card-content">
-        <form className="login-form" onSubmit={handleSubmit}>
-          <Label>
-            <span>EMAIL</span>
+            <form className="login-form" onSubmit={handleSubmit}>
+              <div className="login-field">
+                <Label className="login-field-label" htmlFor="login-email">EMAIL</Label>
+                <Input
+                  id="login-email"
+                  className="login-input"
+                  type="email"
+                  autoComplete="email"
+                  value={email}
+                  onChange={(event) => setEmail(event.target.value)}
+                  required
+                />
+              </div>
 
-            <Input
-              className="login-input"
-              type="email"
-              autoComplete="email"
-              value={email}
-              onChange={(event) =>
-                setEmail(event.target.value)
-              }
-              required
-            />
-          </Label>
+              <div className="login-field">
+                <Label className="login-field-label" htmlFor="login-password">PASSWORD</Label>
+                <Input
+                  id="login-password"
+                  className="login-input"
+                  type="password"
+                  autoComplete="current-password"
+                  value={password}
+                  onChange={(event) => setPassword(event.target.value)}
+                  required
+                />
+              </div>
 
-          <Label>
-            <span>PASSWORD</span>
+              {error && (
+                <Alert className="login-error" role="alert">
+                  <AlertDescription className="form-feedback-copy">{error}</AlertDescription>
+                </Alert>
+              )}
 
-            <Input
-              className="login-input"
-              type="password"
-              autoComplete="current-password"
-              value={password}
-              onChange={(event) =>
-                setPassword(event.target.value)
-              }
-              required
-            />
-          </Label>
+              <Button className="login-submit" type="submit" disabled={isSubmitting}>
+                {isSubmitting ? "SIGNING IN…" : "SIGN IN"}
+              </Button>
+            </form>
 
-          {error && (
-            <Alert role="alert" className="login-error">
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-
-          <Button
-            className="login-submit"
-            type="submit"
-            disabled={isSubmitting}
-          >
-            {isSubmitting
-              ? "SIGNING IN…"
-              : "SIGN IN"}
-          </Button>
-        </form>
-
-        <p className="login-register">
-          New here?{" "}
-          <Link href="/register">
-            Create an account
-          </Link>
-        </p>
+            <p className="login-register">
+              New here? <Link href="/register">Create an account</Link>
+            </p>
           </CardContent>
         </Card>
       </section>
