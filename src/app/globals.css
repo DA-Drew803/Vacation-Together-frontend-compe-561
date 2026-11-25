@@ -550,7 +550,7 @@ a:focus-visible {
 .secondary-button:disabled { cursor: wait; opacity: 0.5; }
 .revision-chat { margin-top: 28px; padding-top: 26px; border-top: 1px solid var(--page-rule); }
 .revision-chat__label { display: block; margin-bottom: 12px; color: var(--page-muted); font-size: 10px; font-weight: 700; letter-spacing: 0.14em; }
-.revision-chat__input { display: block; width: 100%; min-height: 112px; resize: vertical; border: 1px solid var(--page-rule); padding: 14px; background: var(--page-bg); color: var(--page-text); font: inherit; font-size: 14px; line-height: 1.5; }
+.revision-chat__input { display: block; width: 100%; min-height: 112px; field-sizing: fixed; resize: vertical; border: 1px solid var(--page-rule); border-radius: 0; padding: 14px; background: var(--page-bg); color: var(--page-text); box-shadow: none; font: inherit; font-size: 14px; line-height: 1.5; }
 .revision-chat__input::placeholder { color: var(--page-muted); opacity: 0.85; }
 .revision-chat__input:focus { border-color: var(--accent); outline: 1px solid var(--accent); outline-offset: -1px; }
 .revision-chat__input:disabled { cursor: wait; opacity: 0.55; }
