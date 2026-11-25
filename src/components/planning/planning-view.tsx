@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { getCurrentUser } from "@/lib/api/auth";
 import {
   getTripMembers,
@@ -340,12 +341,12 @@ export function PlanningView({
                 />
               </label>
 
-              <button
+              <Button
                 className="gold-button"
                 disabled={saving}
               >
                 SAVE DATES
-              </button>
+              </Button>
             </form>
           ) : (
             <p className="detail-value">
@@ -422,14 +423,14 @@ export function PlanningView({
               </small>
             </label>
 
-            <button
+            <Button
               className="gold-button full-width"
               disabled={saving}
             >
               {saving
                 ? "SAVING…"
                 : "SAVE MY PREFERENCES"}
-            </button>
+            </Button>
           </form>
         </section>
       </div>
@@ -513,12 +514,12 @@ export function PlanningView({
               required
             />
 
-            <button
+            <Button
               className="gold-button"
               disabled={saving}
             >
               CREATE INVITE
-            </button>
+            </Button>
           </form>
         </section>
       )}

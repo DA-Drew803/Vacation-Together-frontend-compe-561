@@ -2,6 +2,7 @@
 
 import Image from "next/image";
 import { useCallback, useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 import { approveCurrentVersion, ApprovalProgress, getApprovalProgress } from "@/lib/api/approval";
 import { getItinerary, Itinerary } from "@/lib/api/itinerary";
 
@@ -72,7 +73,7 @@ export function ApprovalView({ tripId }: { tripId: string }) {
         {finalized && <div className="approval-finalized"><strong>✓ ITINERARY FINALIZED</strong><p>Everyone approved Version {progress.version}.<br />Your trip is ready.</p></div>}
         {error && <p className="inline-message inline-message--error">{error}</p>}
         <div className="approval-actions">
-          {!finalized && (currentMember?.approved ? <p className="approval-current">✓ YOU APPROVED VERSION {progress.version}</p> : <button className="primary-button approval-button" disabled={submitting} onClick={() => void approve()}>{submitting ? "APPROVING…" : `APPROVE VERSION ${progress.version}`}</button>)}
+          {!finalized && (currentMember?.approved ? <p className="approval-current">✓ YOU APPROVED VERSION {progress.version}</p> : <Button className="primary-button approval-button" disabled={submitting} onClick={() => void approve()}>{submitting ? "APPROVING…" : `APPROVE VERSION ${progress.version}`}</Button>)}
           <a className="text-link" href={`/trips/${tripId}/itinerary`}>BACK TO ITINERARY</a>
         </div>
       </section>

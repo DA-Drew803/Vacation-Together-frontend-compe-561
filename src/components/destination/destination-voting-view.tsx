@@ -1,6 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
 import { apiFetchBlob } from "@/lib/api/client";
 import { genericTravelFallback } from "@/lib/destination-image";
 import { selectVotingHero } from "@/lib/destination-voting";
@@ -117,13 +119,13 @@ export function DestinationVotingView({ tripId }: { tripId: string }) {
       <div className="voting-hero-overlay"><p className="eyebrow">DESTINATION PREVIEW</p><strong>{heroCandidate?.name ?? "YOUR DESTINATION"}</strong></div>
     </section>
     <section className="voting-intro" aria-labelledby="voting-heading"><p className="eyebrow">DESTINATION VOTING</p><h1 id="voting-heading">Choose together.</h1><p>Ranked for your shared dates, per-person budget, interests, and available forecast.</p>{trip?.name && <span className="voting-trip-name">{trip.name}</span>}</section>
-    {!candidates.length ? <section className="voting-empty state-panel"><p className="eyebrow">NO CANDIDATES YET</p><p>The backend has not returned destination candidates for this trip.</p><button className="primary-button" disabled={generating} onClick={() => void generateCandidates()}>{generating ? "GENERATING…" : "GENERATE CANDIDATES"}</button></section> : <section className="candidate-list" aria-label="Destination candidates">{candidates.map((candidate) => {
+    {!candidates.length ? <section className="voting-empty state-panel"><p className="eyebrow">NO CANDIDATES YET</p><p>The backend has not returned destination candidates for this trip.</p><Button className="primary-button" disabled={generating} onClick={() => void generateCandidates()}>{generating ? "GENERATING…" : "GENERATE CANDIDATES"}</Button></section> : <section className="candidate-list" aria-label="Destination candidates">{candidates.map((candidate) => {
       const isMine = myVote?.candidate_id === candidate.id;
       const tally = progress?.tallies[candidate.id] ?? 0;
       const isWinner = candidate.destination_id === progress?.selected_destination_id;
       return <article className={`candidate-row${isMine ? " candidate-row--selected" : ""}${isWinner ? " candidate-row--winner" : ""}`} key={candidate.id}><div className="candidate-copy"><div className="candidate-heading"><h2>{candidate.name}</h2>{isWinner && <span className="candidate-badge">SELECTED</span>}</div><p className="candidate-meta">{Math.round(candidate.match_score * 100)}% match · {formatCost(candidate)}/person · {weatherLabel(candidate.weather)}</p><p className="candidate-reason">{candidate.reason}</p><p className="candidate-votes">{tally} {tally === 1 ? "vote" : "votes"}</p></div>{!closed && <button className={`candidate-vote-button${isMine ? " candidate-vote-button--selected" : ""}`} disabled={Boolean(votingCandidateId)} onClick={() => void vote(candidate.id)}>{votingCandidateId === candidate.id ? "SAVING…" : isMine ? "✓ YOUR VOTE" : "VOTE"}</button>}{closed && isWinner && <span className="candidate-locked">✓ GROUP CHOICE</span>}</article>;
     })}</section>}
-    {progress && <section className="voting-footer">{closed ? <><p className="eyebrow">DESTINATION SELECTED</p><h2>{selectedDestination?.name ?? "Your group’s destination is locked in."}</h2><p>Your destination is ready. The backend will reuse it for itinerary generation.</p><a className="primary-button voting-continue" href={`/trips/${tripId}/itinerary`}>{hasItinerary ? "VIEW ITINERARY" : "CHECK ITINERARY"}</a></> : <><strong>{progress.voted_count} of {progress.eligible_count} travelers have voted.</strong><p>You can change your vote until voting closes.</p></>}</section>}
+    {progress && <section className="voting-footer">{closed ? <><p className="eyebrow">DESTINATION SELECTED</p><h2>{selectedDestination?.name ?? "Your group’s destination is locked in."}</h2><p>Your destination is ready. The backend will reuse it for itinerary generation.</p><Button asChild className="primary-button voting-continue"><Link href={`/trips/${tripId}/itinerary`}>{hasItinerary ? "VIEW ITINERARY" : "CHECK ITINERARY"}</Link></Button></> : <><strong>{progress.voted_count} of {progress.eligible_count} travelers have voted.</strong><p>You can change your vote until voting closes.</p></>}</section>}
     {error && <p className="inline-message inline-message--error">{error}</p>}
   </div>;
 }

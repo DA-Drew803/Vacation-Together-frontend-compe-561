@@ -1224,7 +1224,7 @@ a:focus-visible {
   padding: 0 22px;
   border: 1px solid transparent;
   background: var(--accent);
-  color: #20221e;
+  color: var(--page-bg);
   font-size: 10px;
   font-weight: 700;
   letter-spacing: 0.12em;

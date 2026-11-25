@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { SiteHeader } from "@/components/site-header";
+import { Button } from "@/components/ui/button";
 import { acceptInvitation } from "@/lib/api/invitation";
 import { getAccessToken } from "@/lib/auth/session";
 
@@ -57,15 +58,14 @@ export default function InvitationPage() {
               Sign in or create an account before accepting this invitation.
             </p>
 
-            <Link
-              className="gold-button"
-              href={`/login?next=/invitations/${encodeURIComponent(token)}`}
-            >
-              SIGN IN TO JOIN
-            </Link>
+            <Button asChild className="gold-button">
+              <Link href={`/login?next=/invitations/${encodeURIComponent(token)}`}>
+                SIGN IN TO JOIN
+              </Link>
+            </Button>
           </>
         ) : (
-          <button
+          <Button
             className="gold-button"
             onClick={joinTrip}
             disabled={state === "loading"}
@@ -73,7 +73,7 @@ export default function InvitationPage() {
             {state === "loading"
               ? "JOINING…"
               : "ACCEPT INVITATION"}
-          </button>
+          </Button>
         )}
 
         {error && (

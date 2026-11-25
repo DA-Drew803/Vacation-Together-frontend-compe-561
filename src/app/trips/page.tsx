@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { SiteHeader } from "@/components/site-header";
+import { Button } from "@/components/ui/button";
 import { createInvitation } from "@/lib/api/invitation";
 import { createTrip, type Trip } from "@/lib/api/trip";
 
@@ -121,12 +122,12 @@ export default function TripsPage() {
               />
             </label>
 
-            <button
+            <Button
               className="gold-button"
               disabled={busy}
             >
               {busy ? "CREATING…" : "CREATE TRIP"}
-            </button>
+            </Button>
           </form>
         ) : (
           <div className="invite-card">
@@ -157,27 +158,28 @@ export default function TripsPage() {
                 />
               </label>
 
-              <button
+              <Button
                 className="gold-button"
                 disabled={busy}
               >
                 {busy
                   ? "CREATING…"
                   : "CREATE INVITE"}
-              </button>
+              </Button>
             </form>
 
             {inviteLink && (
               <div className="invite-link-box">
                 <span>{inviteLink}</span>
 
-                <button
+                <Button
                   type="button"
+                  variant="outline"
                   className="outline-button"
                   onClick={copyInvite}
                 >
                   COPY INVITE
-                </button>
+                </Button>
               </div>
             )}
 

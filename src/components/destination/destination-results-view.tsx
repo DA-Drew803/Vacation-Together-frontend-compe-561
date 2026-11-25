@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
+import { Button } from "@/components/ui/button";
 
 import { apiFetchBlob } from "@/lib/api/client";
 import {
@@ -201,12 +202,11 @@ export function DestinationResultsView({ tripId }: { tripId: string }) {
       )}
 
       <div className="destination-results-footer">
-        <Link
-          className="primary-button destination-results-action"
-          href={`/trips/${encodeURIComponent(tripId)}/voting`}
-        >
-          CONTINUE TO VOTING
-        </Link>
+        <Button asChild className="primary-button destination-results-action">
+          <Link href={`/trips/${encodeURIComponent(tripId)}/voting`}>
+            CONTINUE TO VOTING
+          </Link>
+        </Button>
       </div>
     </div>
   );

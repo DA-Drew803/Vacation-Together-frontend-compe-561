@@ -7,6 +7,7 @@ import { getCurrentUser, register } from "@/lib/api/auth";
 import { getAccessToken } from "@/lib/auth/session";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -134,9 +135,9 @@ export default function RegisterPage() {
 
           {error && <p role="alert" className="login-error">{error}</p>}
 
-          <button className="login-submit" type="submit" disabled={isSubmitting}>
+          <Button className="login-submit" type="submit" disabled={isSubmitting}>
             {isSubmitting ? "CREATING ACCOUNT…" : "CREATE ACCOUNT"}
-          </button>
+          </Button>
         </form>
 
         <p className="login-register">Already have an account? <Link href="/login">Sign in</Link></p>

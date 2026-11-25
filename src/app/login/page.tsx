@@ -7,6 +7,7 @@ import { getCurrentUser, login } from "@/lib/api/auth";
 import { getAccessToken } from "@/lib/auth/session";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Button } from "@/components/ui/button";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -118,13 +119,13 @@ export default function LoginPage() {
 
           {error && <p role="alert" className="login-error">{error}</p>}
 
-          <button
+          <Button
             className="login-submit"
             type="submit"
             disabled={isSubmitting}
           >
             {isSubmitting ? "SIGNING IN…" : "SIGN IN"}
-          </button>
+          </Button>
         </form>
 
         <p className="login-register">

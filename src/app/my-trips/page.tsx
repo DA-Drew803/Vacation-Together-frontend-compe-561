@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { SiteHeader } from "@/components/site-header";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { listTrips, type Trip } from "@/lib/api/trip";
 import { getAccessToken } from "@/lib/auth/session";
 
@@ -88,9 +89,9 @@ export default function MyTripsPage() {
               ))}
             </div>
           )}
-          <Link className="my-trips-create" href="/trips">
-            CREATE A NEW TRIP
-          </Link>
+          <Button asChild className="my-trips-create">
+            <Link href="/trips">CREATE A NEW TRIP</Link>
+          </Button>
         </section>
       </div>
     </main>
