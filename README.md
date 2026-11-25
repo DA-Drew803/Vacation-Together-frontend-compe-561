@@ -28,7 +28,8 @@ The application combines deterministic travel-planning logic with an AI-assisted
 - Tailwind CSS
 - shadcn/ui
 - Google Maps JavaScript API
-- Bun
+- Axios
+- Vitest and React Testing Library
 
 ### Backend
 
@@ -48,28 +49,37 @@ The application combines deterministic travel-planning logic with an AI-assisted
 
 ---
 
-This repository contains the web pages and user interactions for Vacation Together. The backend API is maintained separately in [backend-compe-561](https://github.com/DA-Drew803/backend-compe-561).
+This repository contains the web pages and user interactions for Vacation Together. The backend API is maintained separately in [Vacation-Together-backend-compe-561](https://github.com/DA-Drew803/Vacation-Together-backend-compe-561).
 
 See [the web functional specification](docs/web-functional-spec.md) for the four-page flow, control behavior, and proposed API boundary.
 
 ## Run locally
 
-Requires Node.js 20.9 or newer and Bun.
+Requires Node.js 20.9 or newer. Start the backend first, then install the committed npm dependencies:
 
 ```bash
-bun install
-bun run dev
+npm ci
+npm run dev
 ```
 
 Open `http://localhost:3000`. Use the following commands to verify changes:
 
 ```bash
-bun run test
-bun run lint
-bun run typecheck
-bun run build
+npm test
+npm run lint
+npm run typecheck
+npm run build
 ```
 
-Set `NEXT_PUBLIC_API_BASE_URL` to the backend API base when it is not running at the default `http://localhost:8000/api`.
+Create `.env.local` when the services are not using their defaults:
 
-The `/plan` route is a temporary destination for the Landing page's planning links. The Planning page will be built separately.
+```dotenv
+NEXT_PUBLIC_API_BASE_URL=http://localhost:8000/api
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=
+```
+
+The Maps key is optional for the core planning and voting workflow. Without it, map content is unavailable. The backend can use curated destination recommendations without OpenAI credentials; AI itinerary generation and revision require backend provider configuration.
+
+## Main workflow
+
+Register or sign in, create a trip, invite another account, and have each member save availability, budget, and preferences. Group Match then connects to destination results, voting, itinerary review, and group approval.
