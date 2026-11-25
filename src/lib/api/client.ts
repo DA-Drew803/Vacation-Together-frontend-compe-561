@@ -1,40 +1,84 @@
+import axios from "axios";
 import { clearAccessToken, getAccessToken } from "@/lib/auth/session";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api";
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api";
 
-export function apiUrl(path: string) {
+const api = axios.create({
+  baseURL: API_BASE_URL,
+  headers: {
+    Accept: "application/json",
+  },
+});
+
+api.interceptors.request.use((config) => {
+  const token = getAccessToken();
+
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+
+  return config;
+});
+
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      clearAccessToken();
+    }
+
+    const detail = error.response?.data?.detail;
+
+    const message =
+      typeof detail === "string"
+        ? detail
+        : detail?.message ??
+          `Request failed with status ${
+            error.response?.status ?? "unknown"
+          }`;
+
+    return Promise.reject(new Error(message));
+  },
+);
+
+export function apiUrl(path: string): string {
   return `${API_BASE_URL}${path}`;
 }
 
-export async function apiFetch<T>(path: string, options: RequestInit = {}): Promise<T> {
-  const token = getAccessToken();
+export async function apiFetch<T>(
+  path: string,
+  options: RequestInit = {},
+): Promise<T> {
   const headers = new Headers(options.headers);
-  headers.set("Accept", "application/json");
-  if (options.body) headers.set("Content-Type", "application/json");
-  if (token && !headers.has("Authorization")) headers.set("Authorization", `Bearer ${token}`);
 
-  const response = await fetch(apiUrl(path), { ...options, headers });
-  if (response.status === 401) clearAccessToken();
-  if (!response.ok) {
-    let message = `Request failed with status ${response.status}`;
+  let data: unknown = undefined;
+
+  if (options.body) {
     try {
-      const error = (await response.json()) as { detail?: string | { message?: string } };
-      if (typeof error.detail === "string") message = error.detail;
-      else if (error.detail?.message) message = error.detail.message;
+      data = JSON.parse(options.body.toString());
     } catch {
-      // Keep the status-based message when the server response is not JSON.
+      data = options.body;
     }
-    throw new Error(message);
   }
-  return (await response.json()) as T;
+
+  const response = await api.request<T>({
+    url: path,
+    method: options.method ?? "GET",
+    headers: Object.fromEntries(headers.entries()),
+    data,
+  });
+
+  return response.data;
 }
 
-export async function apiFetchBlob(path: string) {
-  const token = getAccessToken();
-  const headers = new Headers({ Accept: "image/*" });
-  if (token) headers.set("Authorization", `Bearer ${token}`);
-  const response = await fetch(path.startsWith("http") ? path : apiUrl(path), { headers });
-  if (response.status === 401) clearAccessToken();
-  if (!response.ok) throw new Error(`Request failed with status ${response.status}`);
-  return response.blob();
+export async function apiFetchBlob(path: string): Promise<Blob> {
+  const response = await api.get<Blob>(path, {
+    responseType: "blob",
+    headers: {
+      Accept: "image/*",
+    },
+  });
+
+  return response.data;
 }
