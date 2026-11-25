@@ -67,6 +67,7 @@ export type Revision = {
   id: string;
   status: RevisionStatus;
   requested_version: number;
+  failure_reason?: string | null;
 };
 
 export function getItinerary(tripId: string) {

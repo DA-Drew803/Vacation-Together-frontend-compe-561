@@ -15,6 +15,13 @@ import {
 } from "@/lib/api/approval";
 import { createInvitation } from "@/lib/api/invitation";
 import {
+  getMyAvailability,
+  getMyBudget,
+  updateMyAvailability,
+  updateMyBudget,
+} from "@/lib/api/member-planning";
+import { buildInvitationEmailDraft, buildInvitationGmailUrl, buildInvitationMailto } from "@/lib/invitation-email";
+import {
   getMyPreferences,
   updateMyPreferences,
   type MemberPreference,
@@ -22,7 +29,6 @@ import {
 import {
   getGroupMatch,
   getTrip,
-  updateTripDates,
   type GroupMatch,
   type Trip,
 } from "@/lib/api/trip";
@@ -52,11 +58,16 @@ export function PlanningView({
   const [notes, setNotes] = useState("");
   const [selected, setSelected] = useState<string[]>([]);
   const [email, setEmail] = useState("");
+  const [inviteLink, setInviteLink] = useState<string | null>(null);
+  const [inviteeEmail, setInviteeEmail] = useState("");
   const [start, setStart] = useState("");
   const [end, setEnd] = useState("");
+  const [budget, setBudget] = useState("");
+  const [currency, setCurrency] = useState("USD");
 
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<string | null>(null);
+  const [groupMatchError, setGroupMatchError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [removingMemberId, setRemovingMemberId] =
     useState<string | null>(null);
@@ -80,8 +91,17 @@ export function PlanningView({
 
         setTrip(nextTrip);
         setMembers(nextMembers);
-        setStart(nextTrip.selected_start_date ?? "");
-        setEnd(nextTrip.selected_end_date ?? "");
+
+        const [availability, nextBudget] = await Promise.all([
+          getMyAvailability(tripId).catch(() => null),
+          getMyBudget(tripId).catch(() => null),
+        ]);
+
+        const firstRange = availability?.ranges[0];
+        setStart(firstRange?.start_date ?? "");
+        setEnd(firstRange?.end_date ?? "");
+        setBudget(nextBudget ? String(nextBudget.max_amount) : "");
+        setCurrency(nextBudget?.currency ?? "USD");
 
         let nextPreferences: MemberPreference = {
           member_id:
@@ -106,8 +126,12 @@ export function PlanningView({
         try {
           const groupMatch = await getGroupMatch(tripId);
           setMatch(groupMatch);
-        } catch {
+          setGroupMatchError(null);
+        } catch (cause) {
           setMatch(null);
+          setGroupMatchError(
+            cause instanceof Error ? cause.message : "Group planning is still in progress.",
+          );
         }
       } catch (cause) {
         setError(
@@ -166,7 +190,7 @@ export function PlanningView({
     }
   }
 
-  async function saveDates(
+  async function savePlanningDetails(
     event: FormEvent<HTMLFormElement>,
   ) {
     event.preventDefault();
@@ -176,19 +200,24 @@ export function PlanningView({
     setStatus(null);
 
     try {
-      const saved = await updateTripDates(
-        tripId,
-        start,
-        end,
-      );
+      const [savedAvailability, savedBudget] = await Promise.all([
+        updateMyAvailability(tripId, [
+          { start_date: start, end_date: end },
+        ]),
+        updateMyBudget(tripId, Number(budget), currency),
+      ]);
 
-      setTrip(saved);
-      setStatus("Shared trip dates updated.");
+      const savedRange = savedAvailability.ranges[0];
+      setStart(savedRange?.start_date ?? start);
+      setEnd(savedRange?.end_date ?? end);
+      setBudget(String(savedBudget.max_amount));
+      setCurrency(savedBudget.currency);
+      setStatus("Your dates and budget are saved to your member profile.");
     } catch (cause) {
       setError(
         cause instanceof Error
           ? cause.message
-          : "Unable to update dates.",
+          : "Unable to save your planning details.",
       );
     } finally {
       setSaving(false);
@@ -207,19 +236,23 @@ export function PlanningView({
     try {
       const invitation = await createInvitation(
         tripId,
-        email,
+        email.trim(),
       );
 
       const link = `${window.location.origin}/invitations/${
         invitation.token ?? ""
       }`;
 
-      await navigator.clipboard.writeText(link);
-
+      setInviteLink(link);
+      setInviteeEmail(email.trim());
       setEmail("");
-      setStatus(
-        "Invite created and copied to your clipboard.",
-      );
+
+      try {
+        await navigator.clipboard.writeText(link);
+        setStatus("Invite created and copied to your clipboard.");
+      } catch {
+        setStatus("Invite created. Copy the link or draft an email below.");
+      }
     } catch (cause) {
       setError(
         cause instanceof Error
@@ -228,6 +261,38 @@ export function PlanningView({
       );
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function copyInviteLink() {
+    if (!inviteLink) return;
+
+    try {
+      await navigator.clipboard.writeText(inviteLink);
+      setStatus("Invitation link copied.");
+    } catch {
+      setError("Unable to copy the invitation link.");
+    }
+  }
+
+  async function draftInviteEmail() {
+    if (!inviteLink) return;
+
+    const draft = buildInvitationEmailDraft(inviteeEmail, inviteLink);
+    const gmailWindow = window.open(
+      buildInvitationGmailUrl(inviteeEmail, inviteLink),
+      "_blank",
+      "noopener,noreferrer",
+    );
+    if (gmailWindow) {
+      setStatus("Gmail draft opened.");
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(`To: ${draft.to}\nSubject: ${draft.subject}\n\n${draft.body}`);
+      setStatus("Email draft copied. Paste it into your email app.");
+    } catch {
+      window.location.href = buildInvitationMailto(inviteeEmail, inviteLink);
     }
   }
 
@@ -310,15 +375,14 @@ export function PlanningView({
 
       <div className="planning-grid">
         <section className="planning-card">
-          <p className="eyebrow">SHARED TRIP DETAILS</p>
+          <p className="eyebrow">MY AVAILABILITY &amp; BUDGET</p>
 
           <h2>When are you going?</h2>
 
-          {owner ? (
-            <form
-              className="inline-form"
-              onSubmit={saveDates}
-            >
+          <form
+            className="inline-form"
+            onSubmit={savePlanningDetails}
+          >
               <div className="inline-field">
                 <Label className="inline-field-label" htmlFor="planning-start-date">START</Label>
 
@@ -347,20 +411,43 @@ export function PlanningView({
                 />
               </div>
 
+              <div className="inline-field">
+                <Label className="inline-field-label" htmlFor="planning-budget">MAX BUDGET / PERSON</Label>
+
+                <Input
+                  id="planning-budget"
+                  type="number"
+                  min="0.01"
+                  step="0.01"
+                  value={budget}
+                  onChange={(event) => setBudget(event.target.value)}
+                  placeholder="1200"
+                  required
+                />
+              </div>
+
+              <div className="inline-field">
+                <Label className="inline-field-label" htmlFor="planning-currency">CURRENCY</Label>
+
+                <select
+                  id="planning-currency"
+                  value={currency}
+                  onChange={(event) => setCurrency(event.target.value)}
+                >
+                  <option value="USD">USD</option>
+                  <option value="CAD">CAD</option>
+                  <option value="EUR">EUR</option>
+                  <option value="GBP">GBP</option>
+                </select>
+              </div>
+
               <Button
                 className="gold-button"
                 disabled={saving}
               >
-                SAVE DATES
+                SAVE DATES &amp; BUDGET
               </Button>
             </form>
-          ) : (
-            <p className="detail-value">
-              {start && end
-                ? `${start} → ${end}`
-                : "Dates are not set yet."}
-            </p>
-          )}
 
           <p className="detail-caption">
             Shared dates and budget are used to build
@@ -373,7 +460,7 @@ export function PlanningView({
             <strong>
               {match
                 ? `${match.group_max_budget.currency} ${match.group_max_budget.max_amount} / person`
-                : "Waiting for group data"}
+                : "Waiting for all travelers"}
             </strong>
           </div>
         </section>
@@ -457,6 +544,12 @@ export function PlanningView({
           </Link>
         </div>
 
+        {!match && groupMatchError && (
+          <p className="detail-caption" role="status">
+            {groupMatchError} Complete your planning details and invitees&apos; planning before trying Group Match again.
+          </p>
+        )}
+
         {members.map((member) => (
           <div
             className="member-row"
@@ -531,6 +624,30 @@ export function PlanningView({
               CREATE INVITE
             </Button>
           </form>
+
+          {inviteLink && (
+            <div className="invite-link-box">
+              <span>{inviteLink}</span>
+              <div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="outline-button"
+                  onClick={() => void copyInviteLink()}
+                >
+                  COPY LINK
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="outline-button"
+                  onClick={() => void draftInviteEmail()}
+                >
+                  DRAFT EMAIL
+                </Button>
+              </div>
+            </div>
+          )}
         </section>
       )}
     </section>
