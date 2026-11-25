@@ -1189,17 +1189,19 @@ a:focus-visible {
   margin-top: 38px;
 }
 
-.trip-create-form label,
+.trip-create-form > label,
 .trip-create-form .trip-field,
-.inline-form label,
+.inline-form > label,
+.inline-form .inline-field,
 .notes-field {
   display: grid;
   gap: 8px;
 }
 
-.trip-create-form label span,
+.trip-create-form > label span,
 .trip-create-form .trip-field-label,
-.inline-form label span,
+.inline-form > label span,
+.inline-form .inline-field-label,
 .notes-field span {
   font-size: 9px;
   font-weight: 700;
@@ -1219,6 +1221,13 @@ a:focus-visible {
 }
 
 .trip-create-form input {
+  height: auto;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.inline-form input {
+  height: auto;
   border-radius: 0;
   box-shadow: none;
 }
@@ -1522,7 +1531,8 @@ a:focus-visible {
   gap: 12px;
 }
 
-.inline-form label {
+.inline-form > label,
+.inline-form .inline-field {
   flex: 1 1 150px;
 }
 

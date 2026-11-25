@@ -3,6 +3,8 @@
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { getCurrentUser } from "@/lib/api/auth";
 import {
   getTripMembers,
@@ -315,10 +317,11 @@ export function PlanningView({
               className="inline-form"
               onSubmit={saveDates}
             >
-              <label>
-                <span>START</span>
+              <div className="inline-field">
+                <Label className="inline-field-label" htmlFor="planning-start-date">START</Label>
 
-                <input
+                <Input
+                  id="planning-start-date"
                   type="date"
                   value={start}
                   onChange={(event) =>
@@ -326,12 +329,13 @@ export function PlanningView({
                   }
                   required
                 />
-              </label>
+              </div>
 
-              <label>
-                <span>END</span>
+              <div className="inline-field">
+                <Label className="inline-field-label" htmlFor="planning-end-date">END</Label>
 
-                <input
+                <Input
+                  id="planning-end-date"
                   type="date"
                   value={end}
                   onChange={(event) =>
@@ -339,7 +343,7 @@ export function PlanningView({
                   }
                   required
                 />
-              </label>
+              </div>
 
               <Button
                 className="gold-button"
@@ -504,15 +508,19 @@ export function PlanningView({
             className="inline-form"
             onSubmit={inviteTraveler}
           >
-            <input
-              type="email"
-              value={email}
-              onChange={(event) =>
-                setEmail(event.target.value)
-              }
-              placeholder="friend@example.com"
-              required
-            />
+            <div className="inline-field">
+              <Label className="inline-field-label" htmlFor="planning-invite-email">TRAVELER EMAIL</Label>
+              <Input
+                id="planning-invite-email"
+                type="email"
+                value={email}
+                onChange={(event) =>
+                  setEmail(event.target.value)
+                }
+                placeholder="friend@example.com"
+                required
+              />
+            </div>
 
             <Button
               className="gold-button"
