@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { SiteHeader } from "@/components/site-header";
+import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { listTrips, type Trip } from "@/lib/api/trip";
 import { getAccessToken } from "@/lib/auth/session";
 
@@ -67,18 +68,22 @@ export default function MyTripsPage() {
             <div className="my-trips-list">
               {trips.map((trip) => (
                 <Link
-                  className="my-trip-card"
+                  className="my-trip-link"
                   key={trip.id}
                   href={`/trips/${encodeURIComponent(trip.id)}/plan`}
                   aria-label={`Open ${trip.name}`}
                 >
-                  <span className="my-trip-card-title">{trip.name}</span>
-                  <span className="my-trip-card-meta">
-                    {trip.state.replaceAll("_", " ").toLowerCase()}
-                  </span>
-                  <span className="my-trip-card-action">
-                    OPEN TRIP <span aria-hidden="true">→</span>
-                  </span>
+                  <Card className="my-trip-card">
+                    <CardHeader className="my-trip-card-header">
+                      <CardTitle className="my-trip-card-title">{trip.name}</CardTitle>
+                      <CardDescription className="my-trip-card-meta">
+                        {trip.state.replaceAll("_", " ").toLowerCase()}
+                      </CardDescription>
+                    </CardHeader>
+                    <span className="my-trip-card-action">
+                      OPEN TRIP <span aria-hidden="true">→</span>
+                    </span>
+                  </Card>
                 </Link>
               ))}
             </div>

@@ -20,6 +20,40 @@
   --accent-soft: #4b3e21;
 }
 
+@custom-variant dark (&:is([data-theme="dark"] *));
+
+@theme inline {
+  --color-background: var(--page-bg);
+  --color-foreground: var(--page-text);
+
+  --color-card: var(--surface);
+  --color-card-foreground: var(--page-text);
+
+  --color-popover: var(--surface-raised);
+  --color-popover-foreground: var(--page-text);
+
+  --color-primary: var(--accent);
+  --color-primary-foreground: var(--page-bg);
+
+  --color-secondary: var(--surface-raised);
+  --color-secondary-foreground: var(--page-text);
+
+  --color-muted: var(--surface);
+  --color-muted-foreground: var(--page-muted);
+
+  --color-accent: var(--accent-soft);
+  --color-accent-foreground: var(--page-text);
+
+  --color-destructive: #d16858;
+  --color-border: var(--page-rule);
+  --color-input: var(--page-rule);
+  --color-ring: var(--accent);
+
+  --radius-sm: 0px;
+  --radius-md: 0px;
+  --radius-lg: 0px;
+}
+
 :root[data-theme="light"] {
   color-scheme: light;
   --page-bg: #f6f5f0;
@@ -1328,28 +1362,41 @@ a:focus-visible {
   gap: 14px;
 }
 
+.my-trip-link {
+  display: block;
+}
+
 .my-trip-card {
   display: flex;
   min-height: 150px;
   flex-direction: column;
   align-items: flex-start;
+  gap: 0;
   padding: 22px 24px;
   border: 1px solid var(--page-rule);
+  border-radius: 0;
   background: var(--surface);
   color: var(--page-text);
+  box-shadow: none;
   transition: background-color 160ms ease, border-color 160ms ease, transform 160ms ease;
 }
 
-.my-trip-card:hover,
-.my-trip-card:focus-visible {
+.my-trip-link:hover .my-trip-card,
+.my-trip-link:focus-visible .my-trip-card {
   border-color: var(--accent);
   background: var(--surface-raised);
   transform: translateY(-2px);
 }
 
+.my-trip-card-header {
+  gap: 0;
+  padding: 0;
+}
+
 .my-trip-card-title {
   font-family: "Cormorant Garamond", Georgia, serif;
   font-size: clamp(28px, 4vw, 34px);
+  font-weight: 400;
   line-height: 1.1;
 }
 
