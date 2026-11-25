@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 import { getCurrentUser, register } from "@/lib/api/auth";
 import { getAccessToken } from "@/lib/auth/session";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -133,7 +134,11 @@ export default function RegisterPage() {
             />
           </div>
 
-          {error && <p role="alert" className="login-error">{error}</p>}
+          {error && (
+            <Alert className="login-error" role="alert">
+              <AlertDescription className="form-feedback-copy">{error}</AlertDescription>
+            </Alert>
+          )}
 
           <Button className="login-submit" type="submit" disabled={isSubmitting}>
             {isSubmitting ? "CREATING ACCOUNT…" : "CREATE ACCOUNT"}

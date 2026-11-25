@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
 import { SiteHeader } from "@/components/site-header";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { acceptInvitation } from "@/lib/api/invitation";
 import { getAccessToken } from "@/lib/auth/session";
@@ -54,9 +55,11 @@ export default function InvitationPage() {
 
         {!isSignedIn ? (
           <>
-            <p className="form-error">
-              Sign in or create an account before accepting this invitation.
-            </p>
+            <Alert className="form-error">
+              <AlertDescription className="form-feedback-copy">
+                Sign in or create an account before accepting this invitation.
+              </AlertDescription>
+            </Alert>
 
             <Button asChild className="gold-button">
               <Link href={`/login?next=/invitations/${encodeURIComponent(token)}`}>
@@ -77,9 +80,9 @@ export default function InvitationPage() {
         )}
 
         {error && (
-          <p className="form-error" role="alert">
-            {error}
-          </p>
+          <Alert className="form-error" role="alert">
+            <AlertDescription className="form-feedback-copy">{error}</AlertDescription>
+          </Alert>
         )}
       </section>
     </main>

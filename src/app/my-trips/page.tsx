@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { SiteHeader } from "@/components/site-header";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { listTrips, type Trip } from "@/lib/api/trip";
@@ -22,7 +23,13 @@ export default function MyTripsPage() {
     void listTrips()
       .then(setTrips)
       .catch((cause) => {
-        setError(cause instanceof Error ? cause.message : "Unable to load trips.");
+        setError(
+          cause instanceof TypeError
+            ? "Could not connect to the backend. Start FastAPI and try again."
+            : cause instanceof Error
+              ? cause.message
+              : "Unable to load trips.",
+        );
       })
       .finally(() => setLoading(false));
   }, []);
@@ -58,9 +65,9 @@ export default function MyTripsPage() {
               to see your trips.
             </p>
           ) : error ? (
-            <p className="form-error" role="alert">
-              {error}
-            </p>
+            <Alert className="form-error" role="alert">
+              <AlertDescription className="form-feedback-copy">{error}</AlertDescription>
+            </Alert>
           ) : trips.length === 0 ? (
             <p className="my-trips-notice">
               You have no trips yet. Start one with your group.

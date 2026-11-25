@@ -972,7 +972,7 @@ a:focus-visible {
 
 .login-submit:hover:not(:disabled) { filter: brightness(.9); }
 .login-submit:disabled { cursor: wait; opacity: .65; }
-.login-error { margin: -8px 0 0; color: #b6342c; font-size: 13px; }
+.login-error { margin: -8px 0 0; padding: 0; border: 0; color: #b6342c; font-size: 13px; }
 
 .login-register { margin: 24px 0 0; color: var(--login-button); font-size: 16px; font-weight: 700; }
 .login-register a { color: inherit; }
@@ -1295,8 +1295,15 @@ a:focus-visible {
 .form-success {
   margin: 22px 0 0;
   padding: 13px 15px;
+  border: 0;
   font-size: 13px;
   line-height: 1.5;
+}
+
+.form-feedback-copy {
+  color: inherit;
+  font-size: inherit;
+  line-height: inherit;
 }
 
 .form-error {

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { SiteHeader } from "@/components/site-header";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -198,15 +199,15 @@ export default function TripsPage() {
         )}
 
         {error && (
-          <p className="form-error" role="alert">
-            {error}
-          </p>
+          <Alert className="form-error" role="alert">
+            <AlertDescription className="form-feedback-copy">{error}</AlertDescription>
+          </Alert>
         )}
 
         {message && (
-          <p className="form-success" role="status">
-            {message}
-          </p>
+          <Alert className="form-success" role="status">
+            <AlertDescription className="form-feedback-copy">{message}</AlertDescription>
+          </Alert>
         )}
 
       </section>

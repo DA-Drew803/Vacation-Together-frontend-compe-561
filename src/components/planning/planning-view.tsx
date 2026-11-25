@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -296,15 +297,15 @@ export function PlanningView({
       </div>
 
       {error && (
-        <p className="form-error" role="alert">
-          {error}
-        </p>
+        <Alert className="form-error" role="alert">
+          <AlertDescription className="form-feedback-copy">{error}</AlertDescription>
+        </Alert>
       )}
 
       {status && (
-        <p className="form-success" role="status">
-          {status}
-        </p>
+        <Alert className="form-success" role="status">
+          <AlertDescription className="form-feedback-copy">{status}</AlertDescription>
+        </Alert>
       )}
 
       <div className="planning-grid">
