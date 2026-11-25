@@ -902,6 +902,9 @@ a:focus-visible {
   line-height: 1.45;
 }
 
+.login-card { border: 0; background: transparent; }
+.login-card-content { padding: 0; }
+
 .login-form { display: grid; gap: 22px; }
 .login-form label > span { margin-bottom: 9px; }
 
