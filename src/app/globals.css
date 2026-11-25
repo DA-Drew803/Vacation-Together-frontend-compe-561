@@ -667,8 +667,11 @@ a:focus-visible {
   }
 
   .brand {
+    min-width: 0;
+    overflow: hidden;
     font-size: 11px;
     letter-spacing: 0.13em;
+    text-overflow: ellipsis;
   }
 
   .desktop-nav {
@@ -676,8 +679,13 @@ a:focus-visible {
   }
 
   .header-actions {
+    flex: 0 0 auto;
     gap: 10px;
     margin-left: 12px;
+  }
+
+  .header-account {
+    max-width: 112px;
   }
 
   .menu-button {
