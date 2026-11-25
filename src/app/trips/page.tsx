@@ -4,9 +4,10 @@ import Link from "next/link";
 import { FormEvent, useEffect, useState } from "react";
 import { SiteHeader } from "@/components/site-header";
 import { createInvitation } from "@/lib/api/invitation";
-import { buildInvitationMailto } from "@/lib/invitation-email";
+import { buildInvitationEmailDraft, buildInvitationGmailUrl, buildInvitationMailto } from "@/lib/invitation-email";
 import { createTrip, listTrips, type Trip } from "@/lib/api/trip";
 import { getAccessToken } from "@/lib/auth/session";
+import { getTripHref } from "@/lib/trip-navigation";
 
 export default function TripsPage() {
   const [trips, setTrips] = useState<Trip[]>([]);
@@ -101,6 +102,27 @@ export default function TripsPage() {
 
     await navigator.clipboard.writeText(inviteLink);
     setMessage("Invitation link copied.");
+  }
+
+  async function draftInviteEmail() {
+    if (!inviteLink) return;
+
+    const draft = buildInvitationEmailDraft(inviteeEmail, inviteLink);
+    const gmailWindow = window.open(
+      buildInvitationGmailUrl(inviteeEmail, inviteLink),
+      "_blank",
+      "noopener,noreferrer",
+    );
+    if (gmailWindow) {
+      setMessage("Gmail draft opened.");
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(`To: ${draft.to}\nSubject: ${draft.subject}\n\n${draft.body}`);
+      setMessage("Email draft copied. Paste it into your email app.");
+    } catch {
+      window.location.href = buildInvitationMailto(inviteeEmail, inviteLink);
+    }
   }
 
   return (
@@ -198,12 +220,13 @@ export default function TripsPage() {
                 >
                   COPY LINK
                 </button>
-                <a
+                <button
+                  type="button"
                   className="outline-button"
-                  href={buildInvitationMailto(inviteeEmail, inviteLink)}
+                  onClick={() => void draftInviteEmail()}
                 >
                   DRAFT EMAIL
-                </a>
+                </button>
               </div>
             )}
 
@@ -236,7 +259,7 @@ export default function TripsPage() {
               <Link
                 className="existing-trip"
                 key={trip.id}
-                href={`/trips/${trip.id}/plan`}
+                href={getTripHref(trip)}
               >
                 <span>{trip.name}</span>
                 <small>{trip.state}</small>

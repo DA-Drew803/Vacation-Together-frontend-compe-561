@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { buildInvitationMailto } from "./invitation-email";
+import { buildInvitationGmailUrl, buildInvitationMailto } from "./invitation-email";
 
 describe("buildInvitationMailto", () => {
   it("encodes the invitee, subject, and real invitation URL", () => {
@@ -18,4 +18,17 @@ describe("buildInvitationMailto", () => {
       )}`,
     );
   });
+});
+
+it("builds a Gmail compose URL with the invitation prefilled", () => {
+  const gmailUrl = buildInvitationGmailUrl(
+    "friend@example.com",
+    "http://localhost:3000/invitations/real-token",
+  );
+  const params = new URL(gmailUrl).searchParams;
+
+  expect(gmailUrl).toContain("https://mail.google.com/mail/");
+  expect(params.get("to")).toBe("friend@example.com");
+  expect(params.get("su")).toBe("Invitation to plan a trip on Vacation Together");
+  expect(params.get("body")).toContain("http://localhost:3000/invitations/real-token");
 });

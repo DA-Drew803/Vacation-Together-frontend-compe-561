@@ -15,7 +15,7 @@ import {
   updateMyAvailability,
   updateMyBudget,
 } from "@/lib/api/member-planning";
-import { buildInvitationMailto } from "@/lib/invitation-email";
+import { buildInvitationEmailDraft, buildInvitationGmailUrl, buildInvitationMailto } from "@/lib/invitation-email";
 import {
   getMyPreferences,
   updateMyPreferences,
@@ -267,6 +267,27 @@ export function PlanningView({
       setStatus("Invitation link copied.");
     } catch {
       setError("Unable to copy the invitation link.");
+    }
+  }
+
+  async function draftInviteEmail() {
+    if (!inviteLink) return;
+
+    const draft = buildInvitationEmailDraft(inviteeEmail, inviteLink);
+    const gmailWindow = window.open(
+      buildInvitationGmailUrl(inviteeEmail, inviteLink),
+      "_blank",
+      "noopener,noreferrer",
+    );
+    if (gmailWindow) {
+      setStatus("Gmail draft opened.");
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(`To: ${draft.to}\nSubject: ${draft.subject}\n\n${draft.body}`);
+      setStatus("Email draft copied. Paste it into your email app.");
+    } catch {
+      window.location.href = buildInvitationMailto(inviteeEmail, inviteLink);
     }
   }
 
@@ -602,12 +623,13 @@ export function PlanningView({
                 >
                   COPY LINK
                 </button>
-                <a
+                <button
+                  type="button"
                   className="outline-button"
-                  href={buildInvitationMailto(inviteeEmail, inviteLink)}
+                  onClick={() => void draftInviteEmail()}
                 >
                   DRAFT EMAIL
-                </a>
+                </button>
               </div>
             </div>
           )}

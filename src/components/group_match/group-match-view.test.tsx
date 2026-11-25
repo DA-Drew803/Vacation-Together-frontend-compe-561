@@ -98,6 +98,20 @@ describe("GroupMatchView", () => {
     expect(mocks.push).toHaveBeenCalledWith("/trips/trip%2Fone/results");
   });
 
+  it("continues to existing results when voting has already started", async () => {
+    mocks.generateDestinationCandidates.mockRejectedValue(
+      new Error("Candidates cannot change after voting starts"),
+    );
+    render(<GroupMatchView tripId="trip/one" />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "FIND DESTINATIONS" }));
+
+    await waitFor(() => {
+      expect(mocks.push).toHaveBeenCalledWith("/trips/trip%2Fone/results");
+    });
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
+
   it("preserves loaded content when candidate generation fails", async () => {
     mocks.generateDestinationCandidates.mockRejectedValue(new Error("Generation service unavailable"));
     render(<GroupMatchView tripId="trip-1" />);
