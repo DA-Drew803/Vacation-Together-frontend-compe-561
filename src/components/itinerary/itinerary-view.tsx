@@ -15,7 +15,7 @@ const ItineraryMap = dynamic(() => import("./itinerary-map").then((module) => mo
 const revisionActions = [
   { label: "MAKE IT CHEAPER", instruction: "Make the itinerary cheaper while preserving the destination, trip dates, important activities, budget rules, and number of travel days." },
   { label: "REDUCE WALKING", instruction: "Reduce unnecessary walking and travel between activities by choosing geographically closer alternatives while preserving the destination, overall trip, important activities, budget, and number of travel days." },
-  { label: "ADD MORE FREE TIME", instruction: "Make the itinerary less packed and add more free time for the travelers. Preserve the most important activities, destination, budget, and all travel days while creating a more relaxed pace." },
+  { label: "ADD MORE FREE TIME", instruction: "Replace one nonessential activity with free time or a relaxed rest period. Keep the destination, trip dates, important activities, budget, and all other itinerary items unchanged." },
 ];
 
 function formatMoney(amount: number, currency: string) {
@@ -28,13 +28,33 @@ function formatHeroDate(value: string) {
   return new Intl.DateTimeFormat("en-US", { month: "short", day: "numeric", timeZone: "UTC" }).format(date).toUpperCase();
 }
 
-function summarizeRevision(before: Itinerary, after: Itinerary) {
+function summarizeRevisionRequest(label: string, instruction: string) {
+  const summaries: Record<string, string> = {
+    "MAKE IT CHEAPER": "Reduced the estimated cost of your itinerary.",
+    "REDUCE WALKING": "Reduced walking and travel between activities.",
+    "ADD MORE FREE TIME": "Added more free time by creating a more relaxed itinerary.",
+  };
+
+  return summaries[label] ?? `Applied your request: “${instruction.trim()}”`;
+}
+
+function summarizeRevision(
+  before: Itinerary,
+  after: Itinerary,
+  label: string,
+  instruction: string,
+) {
   const beforeActivities = before.days.flatMap((day) => day.activities.map((activity) => ({ activity, day: day.day_number })));
   const afterActivities = after.days.flatMap((day) => day.activities.map((activity) => ({ activity, day: day.day_number })));
   const beforeById = new Map(beforeActivities.map((entry) => [entry.activity.id, entry]));
   const afterById = new Map(afterActivities.map((entry) => [entry.activity.id, entry]));
+  const beforeBySlot = new Map(beforeActivities.map((entry) => [`${entry.day}:${entry.activity.position}`, entry]));
   const added = afterActivities.filter((entry) => !beforeById.has(entry.activity.id));
   const removed = beforeActivities.filter((entry) => !afterById.has(entry.activity.id));
+  const titleChanges = afterActivities.filter((entry) => {
+    const previous = beforeBySlot.get(`${entry.day}:${entry.activity.position}`);
+    return previous && previous.activity.title !== entry.activity.title;
+  });
 
   if (added.length === 1 && removed.length === 1 && added[0].day === removed[0].day && added[0].activity.position === removed[0].activity.position) {
     return `Revision succeeded.\n\nReplaced ${removed[0].activity.title} with ${added[0].activity.title} on Day ${added[0].day}.`;
@@ -46,6 +66,11 @@ function summarizeRevision(before: Itinerary, after: Itinerary) {
   }
   if (removed.length === 1) {
     return `Revision succeeded.\n\nRemoved ${removed[0].activity.title} from Day ${removed[0].day}.`;
+  }
+  if (titleChanges.length === 1) {
+    const changed = titleChanges[0];
+    const previous = beforeBySlot.get(`${changed.day}:${changed.activity.position}`);
+    return `Revision succeeded.\n\nChanged ${previous?.activity.title ?? "the activity"} to ${changed.activity.title} on Day ${changed.day}. The rest of the itinerary stayed the same.`;
   }
   if (added.length > 1 && added.length <= 3) {
     const grouped = added.reduce<Record<number, string[]>>((result, entry) => {
@@ -64,7 +89,7 @@ function summarizeRevision(before: Itinerary, after: Itinerary) {
   if (changedDays.length === 1) {
     return `Revision succeeded.\n\nDay ${changedDays[0].day_number} was updated.`;
   }
-  return "Revision succeeded.\n\nYour itinerary has been updated.";
+  return `Revision succeeded.\n\n${summarizeRevisionRequest(label, instruction)}`;
 }
 
 export function ItineraryView({ tripId }: { tripId: string }) {
@@ -170,6 +195,7 @@ export function ItineraryView({ tripId }: { tripId: string }) {
       if (revision.status === "RUNNING" || revision.status === "PENDING") {
         let processingFinished = false;
         let finalRevisionStatus: RevisionStatus = revision.status;
+        let finalRevisionFailureReason: string | undefined;
         for (let attempt = 0; attempt < 20; attempt += 1) {
           await new Promise((resolve) => window.setTimeout(resolve, 1500));
           if (revisionCancelRequested.current) {
@@ -178,6 +204,7 @@ export function ItineraryView({ tripId }: { tripId: string }) {
           }
           const revisionResult = await getRevision(tripId, revision.id);
           finalRevisionStatus = revisionResult.status;
+          finalRevisionFailureReason = revisionResult.failure_reason ?? undefined;
           if (!["RUNNING", "PENDING"].includes(revisionResult.status)) {
             processingFinished = true;
             break;
@@ -188,11 +215,11 @@ export function ItineraryView({ tripId }: { tripId: string }) {
         } else if (finalRevisionStatus === "SUCCEEDED") {
           const updatedItinerary = await getItinerary(tripId);
           setItinerary(updatedItinerary);
-          setRevisionMessage(summarizeRevision(previousItinerary, updatedItinerary));
+          setRevisionMessage(summarizeRevision(previousItinerary, updatedItinerary, label, instruction));
         } else if (finalRevisionStatus === "NO_CHANGE") {
           setRevisionMessage("The backend completed the request without changing the current itinerary.");
         } else if (finalRevisionStatus === "FAILED") {
-          setRevisionMessage(revisionFailureMessage());
+          setRevisionMessage(revisionFailureMessage(finalRevisionFailureReason));
         }
       }
       await loadItinerary();

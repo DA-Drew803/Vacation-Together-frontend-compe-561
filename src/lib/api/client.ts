@@ -1,49 +1,64 @@
-import axios from "axios";
+import axios, { AxiosHeaders, type AxiosError } from "axios";
 import { clearAccessToken, getAccessToken } from "@/lib/auth/session";
 
-const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api";
+const API_BASE_URL = (process.env.NEXT_PUBLIC_API_BASE_URL ?? "http://localhost:8000/api").replace(/\/+$/, "");
 
-const api = axios.create({
+type ErrorPayload = { code?: unknown; detail?: unknown; message?: unknown };
+
+function errorMessage(payload: ErrorPayload | undefined, status: number | undefined): string {
+  if (typeof payload?.detail === "string") return payload.detail;
+  if (typeof payload?.message === "string") return payload.message;
+  if (
+    typeof payload?.detail === "object"
+    && payload.detail
+    && "message" in payload.detail
+    && typeof payload.detail.message === "string"
+  ) return payload.detail.message;
+  return `Request failed with status ${status ?? "unknown"}`;
+}
+
+export class ApiError extends Error {
+  constructor(message: string, public readonly status: number | null, public readonly code: string | null = null) {
+    super(message);
+    this.name = "ApiError";
+  }
+}
+
+export const apiClient = axios.create({
   baseURL: API_BASE_URL,
   headers: {
     Accept: "application/json",
   },
 });
 
-api.interceptors.request.use((config) => {
+apiClient.interceptors.request.use((config) => {
   const token = getAccessToken();
-
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
+  config.headers = AxiosHeaders.from(config.headers);
+  if (token && !config.headers.has("Authorization")) config.headers.set("Authorization", `Bearer ${token}`);
 
   return config;
 });
 
-api.interceptors.response.use(
+apiClient.interceptors.response.use(
   (response) => response,
-  (error) => {
+  (error: unknown) => {
+    if (!axios.isAxiosError(error)) return Promise.reject(error);
     if (error.response?.status === 401) {
       clearAccessToken();
     }
 
-    const detail = error.response?.data?.detail;
-
-    const message =
-      typeof detail === "string"
-        ? detail
-        : detail?.message ??
-          `Request failed with status ${
-            error.response?.status ?? "unknown"
-          }`;
-
-    return Promise.reject(new Error(message));
+    const payload = error.response?.data as ErrorPayload | undefined;
+    return Promise.reject(new ApiError(
+      errorMessage(payload, error.response?.status),
+      error.response?.status ?? null,
+      typeof payload?.code === "string" ? payload.code : null,
+    ));
   },
 );
 
 export function apiUrl(path: string): string {
-  return `${API_BASE_URL}${path}`;
+  if (/^https?:\/\//i.test(path)) return path;
+  return `${API_BASE_URL}${path.startsWith("/") ? path : `/${path}`}`;
 }
 
 export async function apiFetch<T>(
@@ -62,23 +77,30 @@ export async function apiFetch<T>(
     }
   }
 
-  const response = await api.request<T>({
+  const response = await apiClient.request<T>({
     url: path,
     method: options.method ?? "GET",
     headers: Object.fromEntries(headers.entries()),
     data,
+    signal: options.signal ?? undefined,
+    withCredentials: options.credentials === "include",
   });
 
   return response.data;
 }
 
-export async function apiFetchBlob(path: string): Promise<Blob> {
-  const response = await api.get<Blob>(path, {
+export async function apiFetchBlob(path: string, signal?: AbortSignal): Promise<Blob> {
+  const response = await apiClient.get<Blob>(path, {
     responseType: "blob",
+    signal,
     headers: {
       Accept: "image/*",
     },
   });
 
   return response.data;
+}
+
+export function isRequestCanceled(error: unknown): boolean {
+  return axios.isCancel(error) || (error as AxiosError | undefined)?.code === "ERR_CANCELED";
 }

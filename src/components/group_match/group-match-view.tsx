@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -70,6 +71,11 @@ export function GroupMatchView({ tripId }: { tripId: string }) {
       await generateDestinationCandidates(tripId);
       router.push(`/trips/${encodeURIComponent(tripId)}/results`);
     } catch (error) {
+      const message = requestMessage(error, "");
+      if (message.includes("Candidates cannot change after voting starts")) {
+        router.push(`/trips/${encodeURIComponent(tripId)}/results`);
+        return;
+      }
       setGenerationError(requestMessage(error, "Unable to generate destination matches."));
     } finally {
       generationLock.current = false;
@@ -94,6 +100,9 @@ export function GroupMatchView({ tripId }: { tripId: string }) {
         <Button variant="outline" type="button" onClick={() => void loadGroupMatch()}>
           TRY AGAIN
         </Button>
+        <Link className="text-link" href={`/trips/${encodeURIComponent(tripId)}/plan`}>
+          RETURN TO PLANNING →
+        </Link>
       </div>
     );
   }

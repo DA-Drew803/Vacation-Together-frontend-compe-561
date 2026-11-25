@@ -1,5 +1,6 @@
 import type { Itinerary, RevisionAccepted } from "./types";
 import { clearAccessToken, getAccessToken } from "@/lib/auth/session";
+import axios, { type AxiosResponse } from "axios";
 
 const DEFAULT_API_URL = "http://localhost:8000/api";
 
@@ -136,21 +137,24 @@ async function request(
   const accessToken = options.accessToken ?? getAccessToken();
   if (accessToken && !headers.has("Authorization")) headers.set("Authorization", `Bearer ${accessToken}`);
 
-  let response: Response;
+  let response: AxiosResponse<unknown>;
   try {
-    response = await fetch(requestUrl(path, options), {
-      ...init,
-      headers,
+    response = await axios.request({
+      url: requestUrl(path, options),
+      method: init.method ?? "GET",
+      headers: Object.fromEntries(headers.entries()),
+      data: init.body ? JSON.parse(String(init.body)) : undefined,
       signal: options.signal,
+      validateStatus: () => true,
     });
   } catch (error) {
-    if (error instanceof DOMException && error.name === "AbortError") throw error;
+    if (axios.isCancel(error)) throw new DOMException("Aborted", "AbortError");
     throw new ItineraryApiError("Unable to reach the itinerary service. Check your connection and try again.", null);
   }
 
-  if (!response.ok) {
+  if (response.status < 200 || response.status >= 300) {
     if (response.status === 401) clearAccessToken();
-    const payload = await response.json().catch(() => null) as ContractError | null;
+    const payload = response.data as ContractError | null;
     const code = typeof payload?.code === "string" ? payload.code : null;
     throw new ItineraryApiError(safeMessage(response.status, payload), response.status, code);
   }
@@ -162,7 +166,8 @@ async function request(
     );
   }
   try {
-    return await response.json();
+    if (typeof response.data === "string" || response.data === undefined) throw new Error("Invalid JSON");
+    return response.data;
   } catch {
     throw new ItineraryApiError(invalidResponseMessage, 502, "INVALID_RESPONSE");
   }

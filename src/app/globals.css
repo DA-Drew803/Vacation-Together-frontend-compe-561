@@ -667,8 +667,11 @@ a:focus-visible {
   }
 
   .brand {
+    min-width: 0;
+    overflow: hidden;
     font-size: 11px;
     letter-spacing: 0.13em;
+    text-overflow: ellipsis;
   }
 
   .desktop-nav {
@@ -676,8 +679,13 @@ a:focus-visible {
   }
 
   .header-actions {
+    flex: 0 0 auto;
     gap: 10px;
     margin-left: 12px;
+  }
+
+  .header-account {
+    max-width: 112px;
   }
 
   .menu-button {
@@ -901,6 +909,9 @@ a:focus-visible {
   font-size: 20px;
   line-height: 1.45;
 }
+
+.login-card { border: 0; background: transparent; }
+.login-card-content { padding: 0; }
 
 .login-form { display: grid; gap: 22px; }
 .login-form label > span { margin-bottom: 9px; }
@@ -1169,6 +1180,7 @@ a:focus-visible {
 
 .trip-create-form input,
 .inline-form input,
+.inline-form select,
 .notes-field textarea {
   width: 100%;
   box-sizing: border-box;
@@ -1177,6 +1189,10 @@ a:focus-visible {
   background: var(--surface);
   color: var(--page-text);
   font: inherit;
+}
+
+.inline-form select {
+  min-height: 48px;
 }
 
 .gold-button {
@@ -1236,6 +1252,12 @@ a:focus-visible {
 
 .invite-link-box span {
   flex: 1;
+}
+
+.invite-link-box > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
 }
 
 .form-error,

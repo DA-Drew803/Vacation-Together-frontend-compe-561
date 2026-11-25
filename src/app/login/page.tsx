@@ -4,6 +4,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 import { useAuth } from "@/Context/auth-context";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { safeAuthRedirect } from "@/lib/auth/redirect";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -52,9 +58,7 @@ export default function LoginPage() {
         window.location.search,
       ).get("next");
 
-      router.push(
-        next?.startsWith("/") ? next : "/trips",
-      );
+      router.push(safeAuthRedirect(next));
     } catch (cause) {
       setError(
         cause instanceof Error
@@ -143,14 +147,13 @@ export default function LoginPage() {
           group.
         </p>
 
-        <form
-          className="login-form"
-          onSubmit={handleSubmit}
-        >
-          <label>
+        <Card className="login-card">
+          <CardContent className="login-card-content">
+        <form className="login-form" onSubmit={handleSubmit}>
+          <Label>
             <span>EMAIL</span>
 
-            <input
+            <Input
               className="login-input"
               type="email"
               autoComplete="email"
@@ -160,12 +163,12 @@ export default function LoginPage() {
               }
               required
             />
-          </label>
+          </Label>
 
-          <label>
+          <Label>
             <span>PASSWORD</span>
 
-            <input
+            <Input
               className="login-input"
               type="password"
               autoComplete="current-password"
@@ -175,18 +178,15 @@ export default function LoginPage() {
               }
               required
             />
-          </label>
+          </Label>
 
           {error && (
-            <p
-              role="alert"
-              className="login-error"
-            >
-              {error}
-            </p>
+            <Alert role="alert" className="login-error">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
 
-          <button
+          <Button
             className="login-submit"
             type="submit"
             disabled={isSubmitting}
@@ -194,7 +194,7 @@ export default function LoginPage() {
             {isSubmitting
               ? "SIGNING IN…"
               : "SIGN IN"}
-          </button>
+          </Button>
         </form>
 
         <p className="login-register">
@@ -203,6 +203,8 @@ export default function LoginPage() {
             Create an account
           </Link>
         </p>
+          </CardContent>
+        </Card>
       </section>
     </main>
   );

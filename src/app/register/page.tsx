@@ -4,6 +4,12 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 import { useAuth } from "@/Context/auth-context";
+import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { safeAuthRedirect } from "@/lib/auth/redirect";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -58,9 +64,7 @@ export default function RegisterPage() {
         window.location.search,
       ).get("next");
 
-      router.push(
-        next?.startsWith("/") ? next : "/trips",
-      );
+      router.push(safeAuthRedirect(next));
     } catch (cause) {
       setError(
         cause instanceof Error
@@ -147,14 +151,13 @@ export default function RegisterPage() {
           Start planning better trips with your group.
         </p>
 
-        <form
-          className="login-form"
-          onSubmit={handleSubmit}
-        >
-          <label>
+        <Card className="login-card">
+          <CardContent className="login-card-content">
+        <form className="login-form" onSubmit={handleSubmit}>
+          <Label>
             <span>YOUR NAME</span>
 
-            <input
+            <Input
               className="login-input"
               type="text"
               autoComplete="name"
@@ -165,12 +168,12 @@ export default function RegisterPage() {
               required
               maxLength={120}
             />
-          </label>
+          </Label>
 
-          <label>
+          <Label>
             <span>EMAIL</span>
 
-            <input
+            <Input
               className="login-input"
               type="email"
               autoComplete="email"
@@ -180,12 +183,12 @@ export default function RegisterPage() {
               }
               required
             />
-          </label>
+          </Label>
 
-          <label>
+          <Label>
             <span>PASSWORD</span>
 
-            <input
+            <Input
               className="login-input"
               type="password"
               autoComplete="new-password"
@@ -196,12 +199,12 @@ export default function RegisterPage() {
               required
               minLength={8}
             />
-          </label>
+          </Label>
 
-          <label>
+          <Label>
             <span>CONFIRM PASSWORD</span>
 
-            <input
+            <Input
               className="login-input"
               type="password"
               autoComplete="new-password"
@@ -212,18 +215,15 @@ export default function RegisterPage() {
               required
               minLength={8}
             />
-          </label>
+          </Label>
 
           {error && (
-            <p
-              role="alert"
-              className="login-error"
-            >
-              {error}
-            </p>
+            <Alert role="alert" className="login-error">
+              <AlertDescription>{error}</AlertDescription>
+            </Alert>
           )}
 
-          <button
+          <Button
             className="login-submit"
             type="submit"
             disabled={isSubmitting}
@@ -231,13 +231,15 @@ export default function RegisterPage() {
             {isSubmitting
               ? "CREATING ACCOUNT…"
               : "CREATE ACCOUNT"}
-          </button>
+          </Button>
         </form>
 
         <p className="login-register">
           Already have an account?{" "}
           <Link href="/login">Sign in</Link>
         </p>
+          </CardContent>
+        </Card>
       </section>
     </main>
   );

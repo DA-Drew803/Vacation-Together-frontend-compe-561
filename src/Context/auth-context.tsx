@@ -6,6 +6,7 @@ import {
   useContext,
   useEffect,
   useMemo,
+  useRef,
   useState,
   type ReactNode,
 } from "react";
@@ -16,7 +17,7 @@ import {
   register as apiRegister,
   type CurrentUser,
 } from "@/lib/api/auth";
-import { getAccessToken } from "@/lib/auth/session";
+import { getAccessToken, subscribeToAuthSession } from "@/lib/auth/session";
 
 type AuthContextValue = {
   user: CurrentUser | null;
@@ -46,30 +47,50 @@ export function AuthProvider({
 }) {
   const [user, setUser] = useState<CurrentUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const operationId = useRef(0);
 
   const refreshUser = useCallback(async () => {
+    const currentOperation = ++operationId.current;
     if (!getAccessToken()) {
-      setUser(null);
+      if (currentOperation === operationId.current) setUser(null);
       return;
     }
 
     try {
       const currentUser = await getCurrentUser();
-      setUser(currentUser);
+      if (currentOperation === operationId.current) setUser(currentUser);
     } catch {
-      setUser(null);
+      if (currentOperation === operationId.current) setUser(null);
     }
   }, []);
 
   useEffect(() => {
-    void refreshUser().finally(() => {
-      setIsLoading(false);
+    let active = true;
+    const restore = getAccessToken() ? getCurrentUser() : Promise.resolve(null);
+    void restore.then(
+      (currentUser) => { if (active) setUser(currentUser); },
+      () => { if (active) setUser(null); },
+    ).finally(() => { if (active) setIsLoading(false); });
+
+    const unsubscribe = subscribeToAuthSession(() => {
+      if (!getAccessToken()) {
+        operationId.current += 1;
+        setUser(null);
+      }
     });
+    const handleStorage = () => { void refreshUser(); };
+    window.addEventListener("storage", handleStorage);
+    return () => {
+      active = false;
+      unsubscribe();
+      window.removeEventListener("storage", handleStorage);
+    };
   }, [refreshUser]);
 
   const login = useCallback(
     async (email: string, password: string) => {
       const currentUser = await apiLogin(email, password);
+      operationId.current += 1;
       setUser(currentUser);
       return currentUser;
     },
@@ -87,7 +108,7 @@ export function AuthProvider({
         email,
         password,
       );
-
+      operationId.current += 1;
       setUser(currentUser);
       return currentUser;
     },
@@ -95,6 +116,7 @@ export function AuthProvider({
   );
 
   const logout = useCallback(() => {
+    operationId.current += 1;
     apiLogout();
     setUser(null);
   }, []);
