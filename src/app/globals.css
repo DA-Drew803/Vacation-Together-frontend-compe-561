@@ -1190,6 +1190,7 @@ a:focus-visible {
 }
 
 .trip-create-form label,
+.trip-create-form .trip-field,
 .inline-form label,
 .notes-field {
   display: grid;
@@ -1197,6 +1198,7 @@ a:focus-visible {
 }
 
 .trip-create-form label span,
+.trip-create-form .trip-field-label,
 .inline-form label span,
 .notes-field span {
   font-size: 9px;
@@ -1214,6 +1216,11 @@ a:focus-visible {
   background: var(--surface);
   color: var(--page-text);
   font: inherit;
+}
+
+.trip-create-form input {
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .gold-button {

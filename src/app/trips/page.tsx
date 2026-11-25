@@ -4,6 +4,8 @@ import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { SiteHeader } from "@/components/site-header";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { createInvitation } from "@/lib/api/invitation";
 import { createTrip, type Trip } from "@/lib/api/trip";
 
@@ -108,10 +110,12 @@ export default function TripsPage() {
             className="trip-create-form"
             onSubmit={handleCreate}
           >
-            <label>
-              <span>TRIP NAME</span>
+            <div className="trip-field">
+              <Label className="trip-field-label" htmlFor="trip-name">TRIP NAME</Label>
 
-              <input
+              <Input
+                id="trip-name"
+                type="text"
                 value={name}
                 onChange={(event) =>
                   setName(event.target.value)
@@ -120,7 +124,7 @@ export default function TripsPage() {
                 required
                 maxLength={200}
               />
-            </label>
+            </div>
 
             <Button
               className="gold-button"
@@ -144,10 +148,11 @@ export default function TripsPage() {
               className="trip-create-form"
               onSubmit={handleInvite}
             >
-              <label>
-                <span>TRAVELER EMAIL</span>
+              <div className="trip-field">
+                <Label className="trip-field-label" htmlFor="trip-invite-email">TRAVELER EMAIL</Label>
 
-                <input
+                <Input
+                  id="trip-invite-email"
                   type="email"
                   value={email}
                   onChange={(event) =>
@@ -156,7 +161,7 @@ export default function TripsPage() {
                   placeholder="friend@example.com"
                   required
                 />
-              </label>
+              </div>
 
               <Button
                 className="gold-button"
