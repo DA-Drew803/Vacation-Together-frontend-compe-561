@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 import { getCurrentUser, register } from "@/lib/api/auth";
 import { getAccessToken } from "@/lib/auth/session";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -46,7 +48,7 @@ export default function RegisterPage() {
     try {
       const user = await register(displayName, email, password);
       setAccountName(user.display_name);
-      const next = new URLSearchParams(window.location.search,).get("next;")
+      const next = new URLSearchParams(window.location.search).get("next");
       router.push(next?.startsWith("/")? next : "/trips",);
     } catch (error) {
       setError(error instanceof Error ? error.message : "Unable to create your account.");
@@ -78,22 +80,57 @@ export default function RegisterPage() {
         <p className="login-description">Start planning better trips with your group.</p>
 
         <form className="login-form" onSubmit={handleSubmit}>
-          <label>
-            <span>YOUR NAME</span>
-            <input className="login-input" type="text" autoComplete="name" value={displayName} onChange={(event) => setDisplayName(event.target.value)} required maxLength={120} />
-          </label>
-          <label>
-            <span>EMAIL</span>
-            <input className="login-input" type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
-          </label>
-          <label>
-            <span>PASSWORD</span>
-            <input className="login-input" type="password" autoComplete="new-password" value={password} onChange={(event) => setPassword(event.target.value)} required minLength={8} />
-          </label>
-          <label>
-            <span>CONFIRM PASSWORD</span>
-            <input className="login-input" type="password" autoComplete="new-password" value={confirmPassword} onChange={(event) => setConfirmPassword(event.target.value)} required minLength={8} />
-          </label>
+          <div className="login-field">
+            <Label className="login-field-label" htmlFor="register-name">YOUR NAME</Label>
+            <Input
+              id="register-name"
+              className="login-input"
+              type="text"
+              autoComplete="name"
+              value={displayName}
+              onChange={(event) => setDisplayName(event.target.value)}
+              required
+              maxLength={120}
+            />
+          </div>
+          <div className="login-field">
+            <Label className="login-field-label" htmlFor="register-email">EMAIL</Label>
+            <Input
+              id="register-email"
+              className="login-input"
+              type="email"
+              autoComplete="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              required
+            />
+          </div>
+          <div className="login-field">
+            <Label className="login-field-label" htmlFor="register-password">PASSWORD</Label>
+            <Input
+              id="register-password"
+              className="login-input"
+              type="password"
+              autoComplete="new-password"
+              value={password}
+              onChange={(event) => setPassword(event.target.value)}
+              required
+              minLength={8}
+            />
+          </div>
+          <div className="login-field">
+            <Label className="login-field-label" htmlFor="register-confirm-password">CONFIRM PASSWORD</Label>
+            <Input
+              id="register-confirm-password"
+              className="login-input"
+              type="password"
+              autoComplete="new-password"
+              value={confirmPassword}
+              onChange={(event) => setConfirmPassword(event.target.value)}
+              required
+              minLength={8}
+            />
+          </div>
 
           {error && <p role="alert" className="login-error">{error}</p>}
 

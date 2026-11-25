@@ -911,7 +911,8 @@ a:focus-visible {
 .register-page .login-form { gap: 14px; }
 
 .login-eyebrow,
-.login-form label > span {
+.login-form label > span,
+.login-field-label {
   display: block;
   margin: 0;
   color: var(--login-muted);
@@ -937,7 +938,8 @@ a:focus-visible {
 }
 
 .login-form { display: grid; gap: 22px; }
-.login-form label > span { margin-bottom: 9px; }
+.login-form label > span,
+.login-field-label { margin-bottom: 9px; }
 
 .login-input {
   box-sizing: border-box;
@@ -948,6 +950,7 @@ a:focus-visible {
   padding: 0 20px;
   background: var(--login-input);
   color: var(--login-text);
+  box-shadow: none;
   font: inherit;
   font-size: 17px;
 }

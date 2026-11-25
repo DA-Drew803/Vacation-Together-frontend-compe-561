@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { FormEvent, useEffect, useState } from "react";
 import { getCurrentUser, login } from "@/lib/api/auth";
 import { getAccessToken } from "@/lib/auth/session";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -88,9 +90,10 @@ export default function LoginPage() {
         <p className="login-description">Sign in to plan, vote, and approve trips with your group.</p>
 
         <form className="login-form" onSubmit={handleSubmit}>
-          <label>
-            <span>EMAIL</span>
-            <input
+          <div className="login-field">
+            <Label className="login-field-label" htmlFor="login-email">EMAIL</Label>
+            <Input
+              id="login-email"
               className="login-input"
               type="email"
               autoComplete="email"
@@ -98,11 +101,12 @@ export default function LoginPage() {
               onChange={(event) => setEmail(event.target.value)}
               required
             />
-          </label>
+          </div>
 
-          <label>
-            <span>PASSWORD</span>
-            <input
+          <div className="login-field">
+            <Label className="login-field-label" htmlFor="login-password">PASSWORD</Label>
+            <Input
+              id="login-password"
               className="login-input"
               type="password"
               autoComplete="current-password"
@@ -110,7 +114,7 @@ export default function LoginPage() {
               onChange={(event) => setPassword(event.target.value)}
               required
             />
-          </label>
+          </div>
 
           {error && <p role="alert" className="login-error">{error}</p>}
 
