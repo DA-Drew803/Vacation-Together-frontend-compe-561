@@ -5,6 +5,7 @@ import { FormEvent, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { getCurrentUser } from "@/lib/api/auth";
 import {
   getTripMembers,
@@ -413,7 +414,7 @@ export function PlanningView({
             <label className="notes-field">
               <span>PRIVATE IDEAS FOR THE GROUP</span>
 
-              <textarea
+              <Textarea
                 value={notes}
                 onChange={(event) =>
                   setNotes(event.target.value)

@@ -1560,6 +1560,8 @@ a:focus-visible {
 
 .notes-field textarea {
   min-height: 116px;
+  border-radius: 0;
+  box-shadow: none;
   resize: vertical;
 }
 
