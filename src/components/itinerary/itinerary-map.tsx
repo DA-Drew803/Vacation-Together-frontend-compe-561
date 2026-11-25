@@ -81,9 +81,7 @@ export function ItineraryMap({ locations, selectedActivityId, hoveredActivityId,
     void importLibrary("maps").then(({ Map }) => {
       if (cancelled || !mapElement.current) return;
       map.current = new Map(mapElement.current, {
-        center: locations[0]
-          ? { lat: locations[0].latitude, lng: locations[0].longitude }
-          : { lat: 0, lng: 0 },
+        center: { lat: 0, lng: 0 },
         zoom: 12,
         mapId,
         fullscreenControl: false,
@@ -104,7 +102,7 @@ export function ItineraryMap({ locations, selectedActivityId, hoveredActivityId,
       map.current = null;
       setMapReady(false);
     };
-  }, [locations, theme]);
+  }, [theme]);
 
   useEffect(() => {
     if (!map.current) return;
@@ -113,8 +111,6 @@ export function ItineraryMap({ locations, selectedActivityId, hoveredActivityId,
 
     const bounds = new google.maps.LatLngBounds();
     locations.forEach((location) => {
-      const hovered = location.id === hoveredActivityId;
-      const markerSelected = location.id === selectedMapPlaceId || (!selectedMapPlaceId && location.id === selectedActivityId);
       const marker = new google.maps.Marker({
         map: map.current,
         position: { lat: location.latitude, lng: location.longitude },
@@ -122,13 +118,13 @@ export function ItineraryMap({ locations, selectedActivityId, hoveredActivityId,
         label: { text: String(location.dayNumber), color: "#1b211e", fontWeight: "700", fontSize: "11px" },
         icon: {
           path: google.maps.SymbolPath.CIRCLE,
-          scale: markerSelected || hovered ? 14 : 11,
-          fillColor: markerSelected ? "#f5c84b" : hovered ? "#e3b83e" : "#d3a935",
+          scale: 11,
+          fillColor: "#d3a935",
           fillOpacity: 1,
           strokeColor: "#f8f6f0",
-          strokeWeight: markerSelected ? 3 : 2,
+          strokeWeight: 2,
         },
-        zIndex: markerSelected ? 3 : hovered ? 2 : 1,
+        zIndex: 1,
       });
       marker.addListener("click", () => {
         lastMarkerSelection.current = location.id;
@@ -145,7 +141,27 @@ export function ItineraryMap({ locations, selectedActivityId, hoveredActivityId,
     } else if (locations.length > 1) {
       map.current.fitBounds(bounds, 42);
     }
-  }, [locations, selectedActivityId, selectedMapPlaceId, hoveredActivityId, onMapSelectActivity, mapReady]);
+  }, [locations, onMapSelectActivity, mapReady]);
+
+  useEffect(() => {
+    const locationsById = new Map(locations.map((location) => [location.id, location]));
+    markers.current.forEach((marker, id) => {
+      const location = locationsById.get(id);
+      if (!location) return;
+      const hovered = location.id === hoveredActivityId;
+      const markerSelected = location.id === selectedMapPlaceId
+        || (!selectedMapPlaceId && location.id === selectedActivityId);
+      marker.setIcon({
+        path: google.maps.SymbolPath.CIRCLE,
+        scale: markerSelected || hovered ? 14 : 11,
+        fillColor: markerSelected ? "#f5c84b" : hovered ? "#e3b83e" : "#d3a935",
+        fillOpacity: 1,
+        strokeColor: "#f8f6f0",
+        strokeWeight: markerSelected ? 3 : 2,
+      });
+      marker.setZIndex(markerSelected ? 3 : hovered ? 2 : 1);
+    });
+  }, [locations, selectedActivityId, selectedMapPlaceId, hoveredActivityId, mapReady]);
 
   useEffect(() => {
     if (!map.current || !selectedLocation) return;

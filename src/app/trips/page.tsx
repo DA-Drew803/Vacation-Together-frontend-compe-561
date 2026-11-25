@@ -4,6 +4,7 @@ import Link from "next/link";
 import { FormEvent, useState } from "react";
 import { SiteHeader } from "@/components/site-header";
 import { createInvitation } from "@/lib/api/invitation";
+import { buildInvitationEmailDraft, buildInvitationGmailUrl, buildInvitationMailto } from "@/lib/invitation-email";
 import { createTrip, type Trip } from "@/lib/api/trip";
 
 export default function TripsPage() {
@@ -11,6 +12,7 @@ export default function TripsPage() {
   const [email, setEmail] = useState("");
   const [createdTrip, setCreatedTrip] = useState<Trip | null>(null);
   const [inviteLink, setInviteLink] = useState<string | null>(null);
+  const [inviteeEmail, setInviteeEmail] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [message, setMessage] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -62,6 +64,7 @@ export default function TripsPage() {
       }`;
 
       setInviteLink(link);
+      setInviteeEmail(email.trim());
       setMessage(
         "Invitation created. Share this link with your traveler.",
       );
@@ -81,6 +84,27 @@ export default function TripsPage() {
 
     await navigator.clipboard.writeText(inviteLink);
     setMessage("Invitation link copied.");
+  }
+
+  async function draftInviteEmail() {
+    if (!inviteLink) return;
+
+    const draft = buildInvitationEmailDraft(inviteeEmail, inviteLink);
+    const gmailWindow = window.open(
+      buildInvitationGmailUrl(inviteeEmail, inviteLink),
+      "_blank",
+      "noopener,noreferrer",
+    );
+    if (gmailWindow) {
+      setMessage("Gmail draft opened.");
+      return;
+    }
+    try {
+      await navigator.clipboard.writeText(`To: ${draft.to}\nSubject: ${draft.subject}\n\n${draft.body}`);
+      setMessage("Email draft copied. Paste it into your email app.");
+    } catch {
+      window.location.href = buildInvitationMailto(inviteeEmail, inviteLink);
+    }
   }
 
   return (
@@ -176,7 +200,14 @@ export default function TripsPage() {
                   className="outline-button"
                   onClick={copyInvite}
                 >
-                  COPY INVITE
+                  COPY LINK
+                </button>
+                <button
+                  type="button"
+                  className="outline-button"
+                  onClick={() => void draftInviteEmail()}
+                >
+                  DRAFT EMAIL
                 </button>
               </div>
             )}
