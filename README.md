@@ -54,6 +54,22 @@ This repository contains the web pages and user interactions for Vacation Togeth
 
 See [the web functional specification](docs/web-functional-spec.md) for the four-page flow, control behavior, and proposed API boundary.
 
+## Folder Structure
+
+```text
+src/
+├── app/                # Next.js routes and page-level layouts
+├── components/         # Reusable feature and page components
+│   └── ui/             # shadcn/ui primitives
+├── features/           # Feature-specific modules and hooks
+├── Context/             # Authentication context/provider
+└── lib/
+    ├── api/            # Axios client and API modules
+    ├── auth/           # Authentication helpers
+    └── itinerary/      # Itinerary types and utilities
+tests and *.test.*       # Component and feature tests near their source files
+```
+
 ## Run locally
 
 Requires Node.js 20.9 or newer and Bun. Start the backend first, then install the dependencies recorded in `bun.lock`:
