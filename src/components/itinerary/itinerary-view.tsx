@@ -402,17 +402,15 @@ export function ItineraryView({ tripId }: { tripId: string }) {
                   ))}
                 </div>
                 {selectedActivityId && !isRevising && itinerary.status === "DRAFT" && (
-                  <label className="move-activity-control">
+                  <div className="move-activity-control">
                     <span>SWAP WITH…</span>
-                    <select value="" onChange={(event) => handleAccessibleTarget(event.target.value)} disabled={Boolean(movingActivityId)}>
-                      <option value="">Choose a target activity</option>
-                      {itinerary.days.map((targetDay) => (
-                        <optgroup key={targetDay.day_number} label={`DAY ${String(targetDay.day_number).padStart(2, "0")}`}>
-                          {targetDay.activities.filter((activity) => activity.id !== selectedActivityId).map((activity) => <option key={activity.id} value={activity.id}>{activity.title}</option>)}
-                        </optgroup>
-                      ))}
-                    </select>
-                  </label>
+                    <ActivitySwapMenu
+                      days={itinerary.days}
+                      selectedActivityId={selectedActivityId}
+                      disabled={Boolean(movingActivityId)}
+                      onSelect={handleAccessibleTarget}
+                    />
+                  </div>
                 )}
               </article>
             ))}
@@ -512,6 +510,61 @@ function ActivityPhoto({ activity }: { activity: Itinerary["days"][number]["acti
     return <img className="activity-photo" src={objectUrl} alt="" loading="lazy" />;
   }
   return <span className="activity-photo activity-photo--empty" aria-hidden="true">PLACE</span>;
+}
+
+function ActivitySwapMenu({
+  days,
+  selectedActivityId,
+  disabled,
+  onSelect,
+}: {
+  days: Itinerary["days"];
+  selectedActivityId: string;
+  disabled: boolean;
+  onSelect: (activityId: string) => void;
+}) {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="move-activity-menu">
+      <button
+        className="move-activity-trigger"
+        type="button"
+        aria-expanded={open}
+        aria-haspopup="listbox"
+        disabled={disabled}
+        onClick={() => setOpen((current) => !current)}
+      >
+        Choose a target activity <span aria-hidden="true">⌄</span>
+      </button>
+      {open && (
+        <div className="move-activity-options" role="listbox" aria-label="Target activity">
+          {days.map((day) => (
+            <div key={day.day_number} className="move-activity-group">
+              <span className="move-activity-group-label">DAY {String(day.day_number).padStart(2, "0")}</span>
+              {day.activities
+                .filter((activity) => activity.id !== selectedActivityId)
+                .map((activity) => (
+                  <button
+                    key={activity.id}
+                    type="button"
+                    role="option"
+                    aria-selected="false"
+                    className="move-activity-option"
+                    onClick={() => {
+                      setOpen(false);
+                      onSelect(activity.id);
+                    }}
+                  >
+                    {activity.title}
+                  </button>
+                ))}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 function WeatherLabel({ weather }: { weather?: ItineraryWeather }) {

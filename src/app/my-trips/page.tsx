@@ -8,6 +8,7 @@ import { Card, CardDescription, CardHeader, CardTitle } from "@/components/ui/ca
 import { Button } from "@/components/ui/button";
 import { listTrips, type Trip } from "@/lib/api/trip";
 import { getAccessToken } from "@/lib/auth/session";
+import { getTripHref } from "@/lib/trip-navigation";
 
 export default function MyTripsPage() {
   const [trips, setTrips] = useState<Trip[]>([]);
@@ -78,7 +79,7 @@ export default function MyTripsPage() {
                 <Link
                   className="my-trip-link"
                   key={trip.id}
-                  href={`/trips/${encodeURIComponent(trip.id)}/plan`}
+                  href={getTripHref(trip)}
                   aria-label={`Open ${trip.name}`}
                 >
                   <Card className="my-trip-card">
